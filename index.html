@@ -126,12 +126,9 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:#0c0a14;color:#f3f4f6
 @keyframes jellyTap{0%{transform:scale(1)}30%{transform:scale(0.92)}60%{transform:scale(1.08)}100%{transform:scale(1)}}
 .jelly-tap{animation:jellyTap 0.45s cubic-bezier(0.34, 1.56, 0.64, 1);}
 
-/* Punteggio personale telefono */
+/* Punteggio personale animato */
 #myScore.score-pop{animation:scorePop .35s cubic-bezier(0.34, 1.56, 0.64, 1)}
 @keyframes scorePop{0%{transform:scale(1)}50%{transform:scale(1.25)}100%{transform:scale(1)}}
-
-/* Schermata ingresso nome */
-#joinScreen{background:radial-gradient(circle at center, #1a1a2e 0%, #0c0a14 100%)}
 
 /* =================================================================
    25 TEMI PREMIUM – VISTA CONCORRENTI
@@ -477,7 +474,7 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:#0c0a14;color:#f3f4f6
           <li>Ogni tessera ha <b>3 errori</b> nascosti.</li>
           <li>Chi urla <b>"Erm, actually!"</b> blocca la lettura.</li>
           <li>Ogni errore vale il <b>valore pieno</b> della tessera.</li>
-          <li>Correzione sbagliata o inventata = valore pieno in negativo.</li>
+          <li>Correzione sbagliata o inventata = <b>− valore pieno</b>.</li>
           <li>Chi azzecca per primo sceglie la tessera successiva.</li>
         </ul>
       </div>
@@ -503,7 +500,7 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:#0c0a14;color:#f3f4f6
      ================================================================= -->
 <div id="audApp" class="hidden min-h-screen flex flex-col">
   <!-- Schermata ingresso nome -->
-  <div id="joinScreen" class="flex-1 flex flex-col items-center justify-center text-center p-4 z-40">
+  <div id="joinScreen" class="flex-1 flex flex-col items-center justify-center text-center p-4 bg-black/90 z-40">
     <div class="glass rounded-3xl p-8 max-w-sm w-full pop-in">
       <div class="text-4xl mb-4">👋</div>
       <h2 class="font-heading font-bold text-2xl text-amber-400 mb-2">Entra in gioco</h2>
@@ -614,8 +611,8 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:#0c0a14;color:#f3f4f6
         <h5 class="text-xs font-bold text-slate-400 uppercase tracking-wider">Assegna o rimuovi punti</h5>
         <select id="assignSel" class="inp"></select>
         <div class="grid grid-cols-2 gap-3">
-          <button class="btn btn-green !min-h-[56px]" onclick="award(1)">+ Punti Interi<br><span id="pFull" class="opacity-80">+ valore tessera</span></button>
-          <button class="btn btn-red !min-h-[56px]" onclick="award(-1)">− Punti Interi<br><span id="pNeg" class="opacity-80">− valore tessera</span></button>
+          <button class="btn btn-green !min-h-[56px]" onclick="award(1)">+ Punti Interi<br><span id="pFull" class="opacity-80">valore tessera</span></button>
+          <button class="btn btn-red !min-h-[56px]" onclick="award(-1)">− Punti Interi<br><span id="pNeg" class="opacity-80">valore tessera</span></button>
         </div>
         <div class="flex gap-2"><input id="manualPts" type="number" inputmode="numeric" class="inp" placeholder="Punti manuali (± numero)"><button class="btn" onclick="awardManual()">Applica</button></div>
       </div>
@@ -956,7 +953,7 @@ function updateTimerUI(instant){
 }
 
 /* =====================================================================
-   6. PUNTEGGI (valore intero)
+   6. PUNTEGGI
    ===================================================================== */
 function toggleMult(){cur.mult=!cur.mult;updateMultUI()}
 function updateMultUI(){$('multTxt').textContent=cur.mult?'ATTIVO':'off';$('multBtn').className='btn !min-h-[56px] '+(cur.mult?'btn-amber':'')}
@@ -1352,8 +1349,6 @@ document.addEventListener('click',()=>{
 /* =====================================================================
    11. VISTA CONCORRENTI – TEMI & ANIMAZIONI
    ===================================================================== */
-let audMe=null;
-
 const AUD_THEMES=[
   {id:'kawaii', name:'Kawaii Pastel', emoji:'🧸'},
   {id:'strawberry', name:'Strawberry Milk', emoji:'🍓'},
@@ -1382,6 +1377,9 @@ const AUD_THEMES=[
   {id:'native', name:'Mobile Native', emoji:'📱'}
 ];
 let currentTheme=load('erm_aud_theme')||'';
+
+let audMe=null;       // nome giocatore corrente su questo telefono
+let joinScreen=null, joinName=null, joinBtn=null, myScore=null;
 
 const aud={key:null,cols:{},tiles:{},timers:{},banner:'',last:0,confetti:false};
 
@@ -1455,9 +1453,9 @@ function setColGone(id,gone){
 
 function audRender(s){
   if(!s || !s.cats) return;
+  $('audWait').classList.add('hidden');
 
   // Nascondi schermata ingresso quando l'host conferma il giocatore
-  const joinScreen=$('joinScreen');
   if(audMe && joinScreen && !joinScreen.classList.contains('hidden')){
     const p=(s.players||[]).find(x=>x.n===audMe);
     if(p){
@@ -1467,7 +1465,6 @@ function audRender(s){
   }
 
   // Punteggio personale in tempo reale
-  const myScore=$('myScore');
   if(audMe && s.players && myScore){
     const p=s.players.find(x=>x.n===audMe);
     if(p){
@@ -1480,7 +1477,6 @@ function audRender(s){
     }
   }
 
-  $('audWait').classList.add('hidden');
   if(s.ended){
     ['audBoard','audShow','audDone','audScores'].forEach(i=>$(i).classList.add('hidden'));
     $('audBanner').innerHTML='';aud.banner='';aud.key=null;
@@ -1488,7 +1484,6 @@ function audRender(s){
     f.innerHTML=`<h2 class="font-heading text-3xl font-black text-amber-400">🏆 Classifica finale</h2>${podiumHtml((s.players||[]).map(p=>({name:p.n,score:p.s})))}`;
     if(!aud.confetti){aud.confetti=true;fireConfetti()}return;
   }
-
   aud.confetti=false;$('audFinal').classList.add('hidden');
   const board=$('audBoard');
   const key=s.cats.map(c=>c.id+':'+c.cards.map(k=>k.id).join(',')).join('|');
@@ -1522,11 +1517,12 @@ function startAudience(room){
   const base='ermact1/'+room,me='p'+Math.random().toString(36).slice(2,9);
   const cl=[];let lastLive=0,lastTs=0,gotAny=false;
 
-  const joinScreen=$('joinScreen');
-  const joinName=$('joinName');
-  const joinBtn=$('joinBtn');
-  const myScore=$('myScore');
+  joinScreen=$('joinScreen');
+  joinName=$('joinName');
+  joinBtn=$('joinBtn');
+  myScore=$('myScore');
 
+  // Nascondi tabellone, mostra ingresso
   if(joinScreen){joinScreen.classList.remove('hidden')}
   $('audBoard').classList.add('hidden');
   $('audShow').classList.add('hidden');
