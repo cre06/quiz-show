@@ -132,11 +132,10 @@ button.pill{cursor:pointer}
 .phase-badge.open{color:var(--acc);border-color:rgba(255,176,32,.5)}
 .phase-badge.answer{color:var(--acc2);border-color:rgba(139,92,246,.4)}
 .phase-badge.reveal{color:var(--good);border-color:rgba(52,211,153,.4)}
-.timer{position:relative;width:80px;height:80px}
-.timer svg{width:100%;height:100%;transform:rotate(-90deg)}
-.timer .trk{stroke:rgba(255,255,255,.06)}
-#ring{stroke:var(--acc);transition:stroke-dashoffset 1s linear}
-#timerDisplay{position:absolute;inset:0;display:grid;place-items:center;font-family:'Outfit',sans-serif;font-weight:900;font-size:1.6rem;color:var(--acc)}
+.hero-buzz{text-align:center;padding:1.4rem 1rem;background:linear-gradient(135deg,rgba(255,176,32,.15),rgba(139,92,246,.15));border-radius:16px;border:2px solid var(--acc);margin-bottom:.8rem;animation:heroIn .5s}
+@keyframes heroIn{from{transform:scale(.9);opacity:0}}
+.hero-label{font-size:.7rem;letter-spacing:.15em;text-transform:uppercase;font-weight:900;color:var(--mut)}
+.hero-name{font-family:'Outfit',sans-serif;font-weight:900;font-size:clamp(1.5rem,6vw,2.2rem);color:var(--acc);margin:.3rem 0;line-height:1.1}
 .buzzlist{display:flex;flex-direction:column;gap:.4rem;max-height:40vh;overflow-y:auto}
 .buzz-item{display:grid;grid-template-columns:auto 1fr auto auto;gap:.4rem;align-items:center;padding:.5rem .65rem;border-radius:10px;border:1px solid var(--bd);background:var(--sfc);font-size:.82rem}
 .buzz-item.first{background:rgba(255,176,32,.14);border-color:rgba(255,176,32,.55)}
@@ -146,7 +145,7 @@ button.pill{cursor:pointer}
 .buzz-ms{font-family:monospace;font-size:.68rem;color:var(--mut);white-space:nowrap}
 .buzz-ms.lead{color:var(--acc);font-weight:800}
 .buzz-move{display:flex;gap:.15rem}
-.buzz-move button{width:20px;height:20px;padding:0;border-radius:5px;border:1px solid var(--bd);background:rgba(255,255,255,.06);font-size:.6rem}
+.buzz-move button{width:22px;height:22px;padding:0;border-radius:5px;border:1px solid var(--bd);background:rgba(255,255,255,.06);font-size:.65rem}
 .judge-btns{display:grid;grid-template-columns:1fr 1fr;gap:.6rem}
 .judge-btns .btn{min-height:56px;font-size:.88rem;flex-direction:column;gap:.1rem}
 .judge-btns small{opacity:.8;font-size:.66rem}
@@ -189,7 +188,7 @@ button.pill{cursor:pointer}
 .buzz-zone{display:flex;flex-direction:column;gap:.7rem}
 .buzz-status{text-align:center;font-family:'Outfit',sans-serif;font-weight:900;font-size:1rem;padding:.5rem;border-radius:12px;background:rgba(255,255,255,.06);border:1px solid var(--bd);color:var(--mut)}
 .buzz-status.armed{color:var(--acc);border-color:var(--acc);background:rgba(255,176,32,.12);animation:pulseGlow 1s infinite alternate}
-.buzz-status.first{color:var(--good);border-color:var(--good);background:rgba(52,211,153,.14)}
+.buzz-status.first{color:var(--good);border-color:var(--good);background:rgba(52,211,153,.14);font-size:1.1rem}
 .buzz-status.late{color:var(--bad);border-color:var(--bad);background:rgba(251,113,133,.12)}
 @keyframes pulseGlow{to{box-shadow:0 0 0 5px rgba(255,176,32,.15)}}
 .big-buzz{position:relative;width:100%;aspect-ratio:1.2;border-radius:24px;border:0;font-family:'Outfit',sans-serif;font-weight:900;font-size:clamp(1.2rem,6vw,1.8rem);letter-spacing:.08em;color:#2a1a00;background:radial-gradient(circle at 30% 30%,#ffd77a,#ffb020 55%,#e89b00);box-shadow:0 20px 50px -15px var(--acc),inset 0 -6px 0 rgba(0,0,0,.18);cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.4rem;transition:transform .12s;user-select:none;touch-action:manipulation}
@@ -204,6 +203,11 @@ button.pill{cursor:pointer}
 #edgeGlow{position:fixed;inset:0;pointer-events:none;z-index:9998;opacity:0;box-shadow:inset 0 0 60px 20px #ffd700,inset 0 0 140px 40px rgba(255,215,0,.55),inset 0 0 220px 80px rgba(255,176,32,.35)}
 #edgeGlow.edge-flash{animation:edgeFlash .45s ease-out}
 @keyframes edgeFlash{0%{opacity:1}100%{opacity:0}}
+.aud-board{display:grid;gap:.4rem;background:var(--sfc);border:1px solid var(--bd);border-radius:14px;padding:.7rem;margin-top:.5rem}
+.aud-col{display:flex;flex-direction:column;gap:.3rem}
+.aud-cat{text-align:center;font-family:'Outfit',sans-serif;font-weight:900;font-size:.62rem;text-transform:uppercase;padding:.3rem .2rem;border-bottom:2px solid var(--acc);color:var(--acc);word-break:break-word;line-height:1.1}
+.aud-tile{padding:.45rem .2rem;border-radius:6px;background:rgba(255,255,255,.06);border:1px solid var(--bd);text-align:center;font-family:'Outfit',sans-serif;font-weight:900;color:var(--acc);font-size:.78rem;transition:all .3s}
+.aud-tile.done{opacity:.25;text-decoration:line-through;filter:grayscale(.6)}
 .scorelist{display:flex;flex-direction:column;gap:.4rem}
 .scorelist .r{display:flex;justify-content:space-between;align-items:center;gap:.5rem;padding:.45rem .7rem;border-radius:10px;background:rgba(255,255,255,.05);font-size:.85rem}
 .scorelist .r.me{border:1px solid var(--acc);background:rgba(255,176,32,.12);font-weight:800}
@@ -228,7 +232,6 @@ button.pill{cursor:pointer}
 <div id="bootError" class="hidden"><div class="boot-card"><div style="font-size:2.5rem">⚠️</div><h2 style="font-family:Outfit,sans-serif;font-weight:900">Qualcosa è andato storto</h2><p id="bootMsg"></p><p class="muted small">Apri la console (F12) per dettagli.</p><button class="btn btn-primary btn-lg" onclick="location.reload()">↻ Ricarica</button></div></div>
 <div id="edgeGlow"></div>
 
-<!-- HOST APP -->
 <div id="hostApp" class="app">
   <header class="topbar"><div class="bar-in">
     <div class="bar-left">
@@ -276,10 +279,6 @@ button.pill{cursor:pointer}
         <label class="row" style="cursor:pointer"><input type="checkbox" id="optScores" onchange="setOpt('showScores',this.checked)"><span>Scores sui telefoni</span></label>
         <label class="row" style="cursor:pointer"><input type="checkbox" id="optPenalty" onchange="setOpt('penalty',this.checked)"><span>Penalità su errore</span></label>
         <div class="fgrid c2">
-          <div><label class="fl">Sec. buzzer</label><input id="optBuzzSec" type="number" min="2" max="60" class="inp" onchange="setOpt('buzzSec',parseInt(this.value)||8)"></div>
-          <div><label class="fl">Sec. finale</label><input id="optAnsSec" type="number" min="5" max="120" class="inp" onchange="setOpt('answerSec',parseInt(this.value)||30)"></div>
-        </div>
-        <div class="fgrid c2">
           <div><label class="fl">Max Toasted</label><input id="optToastMax" type="number" min="100" step="100" class="inp" onchange="setOpt('toastMax',parseInt(this.value)||1000)"></div>
           <div><label class="fl">Max Finale</label><input id="optFinalMax" type="number" min="100" step="100" class="inp" onchange="setOpt('finalMax',parseInt(this.value)||2000)"></div>
         </div>
@@ -288,9 +287,10 @@ button.pill{cursor:pointer}
         <div class="panel-title" style="margin:0">📖 Regole</div>
         <ul class="rules">
           <li>Chi ha il <b>controllo</b> sceglie tessera.</li>
-          <li><b>Primo buzz</b> risponde.</li>
+          <li><b>Primo buzz</b> risponde (niente timer).</li>
           <li>Corretto: +valore, tiene controllo.</li>
-          <li>Sbagliato: −valore, fuori per la tessera.</li>
+          <li>Sbagliato: −valore, passa al prossimo buzz.</li>
+          <li>Puoi cancellare una prenotazione.</li>
           <li>TOASTED: scommetti + bersaglio.</li>
         </ul>
       </div>
@@ -308,7 +308,6 @@ button.pill{cursor:pointer}
   <button id="drawerBtn" class="btn btn-primary drawer-btn hidden" onclick="toggleDrawer(true)">🏆 Squadre</button>
 </div>
 
-<!-- AUDIENCE -->
 <div id="audApp" class="app hidden">
   <div id="joinScreen" class="join">
     <div class="join-card">
@@ -338,6 +337,7 @@ button.pill{cursor:pointer}
         <button id="buzzBtn" class="big-buzz waiting" type="button"><div class="ico">🔔</div><div>BUZZER</div></button>
       </div>
       <div id="audAction" class="hidden"></div>
+      <div id="audBoard" class="aud-board hidden"></div>
       <div id="audScores" class="hidden"></div>
     </div>
   </main>
@@ -345,7 +345,6 @@ button.pill{cursor:pointer}
   <div id="themeModal" class="modal"><div class="sheet w-md"><div class="sheet-head"><h3>🎨 Tema</h3><button class="btn btn-icon" onclick="closeM('themeModal')">✕</button></div><div class="sheet-body"><div id="themeList" class="theme-grid"></div></div></div></div>
 </div>
 
-<!-- CARD MODAL -->
 <div id="cardModal" class="modal">
   <div class="sheet w-lg">
     <div class="sheet-head">
@@ -362,15 +361,26 @@ button.pill{cursor:pointer}
       </div>
       <div id="mOpenControls" class="panel hidden">
         <div class="between row" style="margin-bottom:.6rem"><div class="panel-title" style="margin:0">🎯 Prenotazioni live</div><span id="mBuzzCount" class="chip"></span></div>
-        <div class="row center"><div class="timer"><svg viewBox="0 0 100 100"><circle class="trk" cx="50" cy="50" r="46" stroke-width="8" fill="none"/><circle id="ring" cx="50" cy="50" r="46" stroke-width="8" fill="none" stroke-linecap="round" stroke-dasharray="289" stroke-dashoffset="0"/></svg><span id="timerDisplay">8</span></div></div>
-        <div id="buzzList" class="buzzlist" style="margin-top:.6rem"></div>
-        <div class="row center" style="margin-top:.6rem"><button class="btn btn-bad" onclick="closeBuzzerNoOne()">Chiudi · nessuno</button></div>
+        <div id="buzzList" class="buzzlist"></div>
+        <div class="row center" style="margin-top:.7rem;gap:.4rem;flex-wrap:wrap">
+          <button class="btn btn-primary" onclick="startJudging()">▶ Seleziona primo</button>
+          <button class="btn btn-bad" onclick="closeBuzzerNoOne()">Chiudi · nessuno</button>
+        </div>
       </div>
       <div id="mAnswerControls" class="panel hidden">
-        <div id="mWinner" class="turn" style="font-size:1rem;margin-bottom:.7rem"></div>
+        <div class="hero-buzz">
+          <div class="hero-label">Priorità</div>
+          <div class="hero-name" id="mWinnerName">—</div>
+          <div class="small muted" id="mWinnerProgress"></div>
+        </div>
+        <div id="mAnswerQueue" class="small muted" style="text-align:center;margin-bottom:.6rem"></div>
         <div class="judge-btns">
           <button class="btn btn-good" onclick="judge(true)">✓ Corretto<small>+<span id="mPtsPlus">200</span></small></button>
           <button class="btn btn-bad" onclick="judge(false)">✗ Sbagliato<small>−<span id="mPtsMinus">200</span></small></button>
+        </div>
+        <div class="row center" style="margin-top:.6rem;gap:.4rem;flex-wrap:wrap">
+          <button class="btn btn-soft-bad btn-sm" onclick="cancelWinner()">✕ Cancella prenotazione</button>
+          <button class="btn btn-sm" onclick="backToList()">← Torna alla lista</button>
         </div>
       </div>
       <div id="mToastedWagerControls" class="panel hidden">
@@ -402,10 +412,8 @@ button.pill{cursor:pointer}
   </div>
 </div>
 
-<!-- FINAL MODAL -->
 <div id="finalModal" class="modal"><div class="sheet w-lg"><div class="sheet-head"><h3>🔥 Final Showdown</h3><button class="btn btn-icon" onclick="closeM('finalModal')">✕</button></div><div id="finalBody" class="sheet-body"></div></div></div>
 
-<!-- QR -->
 <div id="qrModal" class="modal full"><div class="sheet"><div class="sheet-head"><h3>📱 Inquadra per giocare</h3><button class="btn btn-icon" onclick="closeM('qrModal')">✕</button></div><div class="sheet-body"><div class="qr-wrap">
   <div id="qrBox" class="qr-box"></div>
   <div id="qrCount" class="bold" style="color:var(--good)"></div>
@@ -415,12 +423,9 @@ button.pill{cursor:pointer}
   <button class="btn btn-primary btn-lg btn-block" onclick="closeM('qrModal')">▶ Inizia</button>
 </div></div></div></div>
 
-<!-- EDITOR -->
 <div id="editorModal" class="modal"><div class="sheet w-lg"><div class="sheet-head"><div id="edTabs" class="tabs"></div><button class="btn btn-icon" onclick="closeM('editorModal')">✕</button></div><div id="edBody" class="sheet-body"></div><div class="sheet-foot" style="justify-content:flex-end"><button class="btn btn-primary btn-lg" onclick="closeM('editorModal')">✅ Chiudi</button></div></div></div>
 
-<div id="toast"></div>
-
-<script>
+<div id="toast"></div><script>
 /* ========== UTILS ========== */
 const DK='jp_deck_v1',GK='jp_game_v1',SK='jp_settings_v1',RK='jp_room_v1',DVK='jp_dev_v1',NK='jp_name_v1',TK='jp_theme',MK='jp_mode';
 const TOPIC='jeopardy1';
@@ -438,14 +443,15 @@ const vib=p=>{try{navigator.vibrate&&navigator.vibrate(p)}catch{}};
 function toast(m){const t=$('toast');t.textContent=m;t.classList.add('show');clearTimeout(toast.t);toast.t=setTimeout(()=>t.classList.remove('show'),2500)}
 function openM(id){$(id).classList.add('open');document.body.style.overflow='hidden'}
 function closeM(id){$(id).classList.remove('open');document.body.style.overflow=''}
+function flashEdge(){const g=$('edgeGlow');if(!g)return;g.classList.remove('edge-flash');void g.offsetWidth;g.classList.add('edge-flash')}
 
 /* ========== STATE ========== */
 let deck=load(DK);
-let settings=Object.assign({sound:true,showScores:true,penalty:true,buzzSec:8,answerSec:30,toastMax:1000,finalMax:2000,publicUrl:''},load(SK)||{});
+let settings=Object.assign({sound:true,showScores:true,penalty:true,toastMax:1000,finalMax:2000,answerSec:30,publicUrl:''},load(SK)||{});
 let game=Object.assign({players:[{id:1,name:'Squadra 1',score:0,dev:null},{id:2,name:'Squadra 2',score:0,dev:null}],activeId:1,completed:{},final:null,ended:false},load(GK)||{});
 function ensureActive(){if(!game.players.some(p=>p.id===game.activeId))game.activeId=game.players[0]?.id??null}
 ensureActive();
-let cur=null,cardTimer=null;
+let cur=null;
 const saveDeck=()=>store(DK,deck), saveGame=()=>store(GK,game);
 
 /* ========== AUDIO ========== */
@@ -482,8 +488,6 @@ function setOpt(k,v){settings[k]=v;store(SK,settings);broadcast();renderSettings
 function renderSettings(){
   $('optScores').checked=settings.showScores;
   $('optPenalty').checked=settings.penalty;
-  $('optBuzzSec').value=settings.buzzSec;
-  $('optAnsSec').value=settings.answerSec;
   $('optToastMax').value=settings.toastMax;
   $('optFinalMax').value=settings.finalMax;
 }
@@ -545,11 +549,11 @@ function adjust(id,amt){const p=game.players.find(x=>x.id===id);if(!p)return;p.s
 function resetGame(){
   if(!confirm('Nuova partita? Punteggi e tessere verranno azzerati.'))return;
   game.players.forEach(p=>p.score=0);game.completed={};game.final=null;game.ended=false;
-  cur=null;stopCardTimer();['cardModal','finalModal'].forEach(m=>$(m).classList.remove('open'));document.body.style.overflow='';
+  cur=null;['cardModal','finalModal'].forEach(m=>$(m).classList.remove('open'));document.body.style.overflow='';
   saveGame();renderBoard();renderPlayers();broadcast();
 }
 
-/* ========== CARD ========== */
+/* ========== CARD (NO TIMER) ========== */
 function openCard(id){
   const f=findCard(id);if(!f)return;
   initAudio();
@@ -577,8 +581,18 @@ function renderCardModal(){
   $('mToastedAnswerControls').classList.toggle('hidden',cur.phase!=='toasted_answer');
   $('mPtsPlus').textContent=k.points;
   $('mPtsMinus').textContent=settings.penalty?k.points:0;
-  if(cur.phase==='open'){renderBuzzList();$('timerDisplay').textContent=settings.buzzSec}
-  if(cur.phase==='answer'&&cur.winner){const w=game.players.find(p=>p.id===cur.winner);$('mWinner').innerHTML=w?`🎯 <b>${esc(w.name)}</b> ha la priorità:`:''}
+  if(cur.phase==='open')renderBuzzList();
+  if(cur.phase==='answer'){
+    const w=game.players.find(p=>p.id===cur.winner);
+    $('mWinnerName').textContent=w?w.name:'—';
+    const pos=cur.buzzes.findIndex(b=>b.pid===cur.winner);
+    $('mWinnerProgress').textContent=pos>=0?`Prenotazione #${pos+1} di ${cur.buzzes.length}`:'';
+    $('mAnswerQueue').innerHTML=cur.buzzes.map((b,i)=>{
+      const isWinner=b.pid===cur.winner;
+      const isOut=cur.excluded.has(b.pid);
+      return `<div style="display:inline-block;padding:2px 8px;margin:2px;border-radius:6px;background:${isWinner?'rgba(52,211,153,.2)':isOut?'rgba(251,113,133,.15)':'rgba(255,255,255,.06)'};${isOut?'text-decoration:line-through;opacity:.6':''}">${i+1}. ${esc(b.name)}</div>`;
+    }).join('');
+  }
   if(cur.phase==='toasted_wager'){
     const decider=game.players.find(p=>p.id===game.activeId);
     $('mToastedTeam').textContent=decider?decider.name:'—';
@@ -599,37 +613,35 @@ function renderBuzzList(){
   const now=cur.buzzerOpenedAt||cur.buzzes[0].tPress;
   el.innerHTML=cur.buzzes.map((b,i)=>{
     const ms=Math.max(0,Math.round(b.tPress-now));
-    const out=cur.excluded.has(b.pid);
-    return `<div class="buzz-item ${i===0?'first':''} ${out?'out':''}">
+    const isOut=cur.excluded.has(b.pid);
+    return `<div class="buzz-item ${i===0?'first':''} ${isOut?'out':''}" style="${isOut?'opacity:.5;filter:grayscale(.4);text-decoration:line-through':''}">
       <div class="buzz-rank">${i+1}</div>
-      <div class="buzz-name">${esc(b.name)}${b.pid===cur.winner?' 🎯':''}</div>
+      <div class="buzz-name">${esc(b.name)}${i===0&&!isOut?' 🎯':''}</div>
       <div class="buzz-ms ${i===0?'lead':''}">+${ms}ms</div>
       <div class="buzz-move"><button onclick="moveBuzz(${i},-1)">↑</button><button onclick="moveBuzz(${i},1)">↓</button></div>
     </div>`;
   }).join('');
 }
-function moveBuzz(i,d){if(!cur)return;const j=i+d;if(j<0||j>=cur.buzzes.length)return;[cur.buzzes[i],cur.buzzes[j]]=[cur.buzzes[j],cur.buzzes[i]];cur.winner=cur.buzzes[0]?.pid||null;renderBuzzList();broadcast()}
-function stopCardTimer(){if(cardTimer){clearInterval(cardTimer);cardTimer=null}}
-function startCardTimer(sec,onEnd){
-  stopCardTimer();let left=sec;
-  $('timerDisplay').textContent=left;$('ring').style.strokeDashoffset=0;
-  cardTimer=setInterval(()=>{
-    left--;$('timerDisplay').textContent=Math.max(0,left);$('ring').style.strokeDashoffset=289*(1-left/sec);playSound('tick');
-    if(left<=0){stopCardTimer();onEnd&&onEnd()}
-  },1000);
-}
+function moveBuzz(i,d){if(!cur)return;const j=i+d;if(j<0||j>=cur.buzzes.length)return;[cur.buzzes[i],cur.buzzes[j]]=[cur.buzzes[j],cur.buzzes[i]];renderBuzzList();broadcast()}
+
 function openBuzzer(){
   if(!cur)return;
+  flashEdge();
   cur.phase='open';cur.buzzes=[];cur.excluded=new Set();cur.winner=null;cur.buzzerOpenedAt=Date.now();
   renderCardModal();broadcast();playSound('open');
-  startCardTimer(settings.buzzSec,autoAdvance);
 }
-function autoAdvance(){
-  if(!cur||cur.phase!=='open')return;
-  if(!cur.buzzes.length){cur.phase='reveal';renderCardModal();broadcast();toast('⏰ Nessuno si è prenotato');return}
-  cur.winner=cur.buzzes[0].pid;cur.phase='answer';renderCardModal();broadcast();playSound('buzz');
+function startJudging(){
+  if(!cur)return;
+  const first=cur.buzzes.find(b=>!cur.excluded.has(b.pid));
+  if(!first){toast('Nessuna prenotazione valida');return}
+  cur.winner=first.pid;
+  cur.phase='answer';
+  renderCardModal();broadcast();playSound('buzz');
 }
-function closeBuzzerNoOne(){if(!cur)return;cur.phase='reveal';stopCardTimer();renderCardModal();broadcast()}
+function closeBuzzerNoOne(){
+  if(!cur)return;
+  cur.phase='reveal';renderCardModal();broadcast();
+}
 function hostOnBuzz(msg){
   if(!cur||cur.phase!=='open')return;
   const p=game.players.find(x=>x.dev===msg.dev);
@@ -637,8 +649,31 @@ function hostOnBuzz(msg){
   if(cur.buzzes.some(b=>b.pid===p.id))return;
   cur.buzzes.push({pid:p.id,name:p.name,dev:msg.dev,tPress:msg.tPress||Date.now()});
   cur.buzzes.sort((a,b)=>a.tPress-b.tPress);
-  if(!cur.winner)cur.winner=cur.buzzes[0].pid;
   renderBuzzList();broadcast();
+}
+function nextBuzzOrReveal(){
+  if(!cur)return;
+  const next=cur.buzzes.find(b=>!cur.excluded.has(b.pid));
+  if(next){
+    cur.winner=next.pid;
+    cur.phase='answer';
+    renderCardModal();broadcast();
+  } else {
+    cur.phase='reveal';cur.winner=null;
+    renderCardModal();broadcast();
+  }
+}
+function backToList(){
+  if(!cur)return;
+  cur.phase='open';cur.winner=null;
+  renderCardModal();broadcast();
+}
+function cancelWinner(){
+  if(!cur||!cur.winner)return;
+  if(!confirm('Cancellare questa prenotazione? Il giocatore non prenderà penalità.'))return;
+  cur.buzzes=cur.buzzes.filter(b=>b.pid!==cur.winner);
+  cur.winner=null;
+  nextBuzzOrReveal();
 }
 function judge(correct){
   if(!cur||!cur.winner)return;
@@ -649,13 +684,10 @@ function judge(correct){
     cur.phase='reveal';renderCardModal();broadcast();
   } else {
     if(settings.penalty){p.score-=pts;saveGame();renderPlayers();floatPts(p.id,-pts)}
-    playSound('wrong');cur.excluded.add(p.id);cur.winner=null;cur.buzzes=[];
-    if(cur.excluded.size<game.players.length){
-      cur.phase='open';cur.buzzerOpenedAt=Date.now();renderCardModal();broadcast();
-      startCardTimer(settings.buzzSec,autoAdvance);
-    } else {
-      cur.phase='reveal';renderCardModal();broadcast();
-    }
+    playSound('wrong');
+    cur.excluded.add(cur.winner);
+    cur.winner=null;
+    nextBuzzOrReveal();
   }
 }
 function floatPts(pid,amt){
@@ -666,19 +698,18 @@ function floatPts(pid,amt){
   el.style.left='50%';el.style.top=(innerHeight*.35)+'px';
   document.body.appendChild(el);setTimeout(()=>el.remove(),1400);
 }
-function revealAnswer(){if(!cur)return;cur.phase='reveal';stopCardTimer();renderCardModal();broadcast()}
+function revealAnswer(){if(!cur)return;cur.phase='reveal';renderCardModal();broadcast()}
 function secondChance(){
   if(!cur)return;
   cur.phase='open';cur.excluded=new Set();cur.winner=null;cur.buzzes=[];cur.buzzerOpenedAt=Date.now();
   renderCardModal();broadcast();
-  startCardTimer(settings.buzzSec,autoAdvance);
 }
 function completeTile(){
   if(!cur)return;
-  game.completed[cur.id]=true;saveGame();stopCardTimer();cur=null;closeM('cardModal');
+  game.completed[cur.id]=true;saveGame();cur=null;closeM('cardModal');
   renderBoard();renderPlayers();broadcast();
 }
-function closeCard(){stopCardTimer();cur=null;closeM('cardModal');broadcast()}
+function closeCard(){cur=null;closeM('cardModal');broadcast()}
 
 /* ========== TOASTED ========== */
 function hostSubmitWager(){
@@ -692,7 +723,7 @@ function hostSubmitWager(){
   applyToastWager(Math.min(w,maxW),target);
 }
 function applyToastWager(wager,targetId){
-  if(!cur||cur.phase!=='toasted_wager'&&cur.phase!=='toasted_answer')return;
+  if(!cur||(cur.phase!=='toasted_wager'&&cur.phase!=='toasted_answer'))return;
   cur.toasted={wager:parseInt(wager,10)||0,targetId:parseInt(targetId,10),deciderId:game.activeId};
   if(cur.toasted.wager<5)return;
   cur.phase='toasted_answer';renderCardModal();broadcast();
@@ -812,17 +843,16 @@ function snapshot(){
   const act=game.players.find(p=>p.id===game.activeId);
   let open=null;
   if(cur){
-    open={id:cur.id,cat:cur.catTitle,p:cur.card.points,phase:cur.phase,toasted:!!cur.card.toasted};
+    open={id:cur.id,cat:cur.catTitle,p:cur.card.points,phase:cur.phase};
     if(cur.phase==='toasted_wager')open.deciderId=game.activeId;
     if(cur.phase==='toasted_answer'&&cur.toasted)open.toastedSummary=cur.toasted;
-    if(cur.phase==='open'||cur.phase==='answer')open.buzzCount=cur.buzzes.length;
     if(cur.winner)open.winner=cur.winner;
     open.excluded=Array.from(cur.excluded||[]);
+    // NOTA: toasted NON viene esposto ai telefoni
   }
   return{
     t:'state',ts:Date.now(),
     cats:deck?deck.categories.filter(c=>c.cards.length).map(c=>({id:c.id,title:c.title,emoji:c.emoji,cards:c.cards.slice().sort((a,b)=>a.points-b.points).map(k=>({id:k.id,p:k.points,d:!!game.completed[k.id]}))})):[],
-    show:deck&&deck.final?{d:!!game.completed.final}:null,
     open:open,act:act?act.name:null,
     players:game.players.map(p=>sp?{n:p.name,dv:p.dev||null,s:p.score,id:p.id}:{n:p.name,dv:p.dev||null,id:p.id}),
     ended:!!game.ended,
@@ -964,7 +994,12 @@ function renderThemeList(){
     `<button class="theme-card ${cur_===t.id?'sel':''}" onclick="setTheme('${t.id}')"><div class="theme-sw" style="background:${t.bg};color:${t.tx}"><span>${t.emoji}</span><i style="background:${t.acc}"></i></div><span class="n">${esc(t.name)}</span></button>`
   ).join('');
 }
-function setTheme(id){store(TK,id);if(id==='light'||id==='dark'){document.documentElement.dataset.mode=id}renderThemeList();toast('Tema applicato');vib(20)}
+function setTheme(id){
+  store(TK,id);
+  if(id==='light'||id==='dark'){document.documentElement.dataset.mode=id}
+  toast('Tema applicato');vib(20);
+  closeM('themeModal');
+}
 
 /* ========== EDITOR ========== */
 let edTab='cats',edCat=null,edCardId=null;
@@ -1103,7 +1138,7 @@ function demoDeck(){
 function loadDemo(){deck=demoDeck();saveDeck();edCat=deck.categories[0].id;renderAll();toast('Mazzo demo caricato ✓')}
 
 /* ========== AUDIENCE ========== */
-const A={base:'',dev:'',name:'',cl:[],me:null,state:null,lastTs:0,lastLive:0,gotAny:false,auto:false,seenMe:false,offsets:[],lastBuzzSent:0,lastToastWagerSent:0,lastFinalSent:0};
+const A={base:'',dev:'',name:'',cl:[],me:null,state:null,lastTs:0,lastLive:0,gotAny:false,auto:false,seenMe:false,offsets:[],lastBuzzSent:0};
 function audStatus(st){
   const T_={online:['ok','Live'],connecting:['wait','Conn.'],nohost:['err','Host non trovato'],offline:['err','Riconnessione…']};
   const [cls,txt]=T_[st]||T_.offline;
@@ -1134,9 +1169,8 @@ async function initAudience(room){
   $('joinName').value=A.name;
   $('joinName').addEventListener('keydown',e=>{if(e.key==='Enter')joinNow()});
   if(A.name){$('joinNote').textContent='Registrazione in corso…'}
-  const glow=$('edgeGlow');
   $('buzzBtn').addEventListener('pointerdown',()=>{
-    glow.classList.remove('edge-flash');void glow.offsetWidth;glow.classList.add('edge-flash');
+    flashEdge();
     const now=Date.now();const offset=median(A.offsets);const tPress=now-offset;
     if(now-A.lastBuzzSent<300)return;
     A.lastBuzzSent=now;
@@ -1184,11 +1218,11 @@ function audRender(s){
   const sp=$('myScore');
   if(me&&typeof me.s==='number'){sp.classList.remove('hidden');sp.textContent='💰 '+me.s}
   else sp.classList.add('hidden');
-  if(!me){['audNow','audBuzzer','audAction','audScores'].forEach(i=>$(i).classList.add('hidden'));return}
+  if(!me){['audNow','audBuzzer','audAction','audBoard','audScores'].forEach(i=>$(i).classList.add('hidden'));return}
 
   // Final results
   if(s.ended&&s.finalResults){
-    ['audBuzzer','audAction','audScores'].forEach(i=>$(i).classList.add('hidden'));
+    ['audBuzzer','audAction','audBoard','audScores'].forEach(i=>$(i).classList.add('hidden'));
     $('audNow').innerHTML=`<h2 class="display" style="font-weight:900;font-size:1.5rem;color:var(--acc);text-align:center">🏆 Finale</h2>
       <div class="podium">${[1,0,2].map((idx,c)=>{const p=s.finalResults[idx];if(!p)return '<div class="step"></div>';return `<div class="step"><div class="nm">${esc(p.n)}</div><div class="pt">${p.s} pt</div><div class="pod" style="height:${['100px','140px','70px'][c]}">${['🥈','🥇','🥉'][c]}</div></div>`}).join('')}</div>`;
     return;
@@ -1230,11 +1264,22 @@ function audRender(s){
     bz.classList.add('hidden');
   }
 
-  // Action: toasted wager or final wager
+  // BOARD (caselle coi valori, senza indizi TOASTED)
+  const ab=$('audBoard');
+  if(s.cats&&s.cats.length){
+    ab.classList.remove('hidden');
+    ab.style.gridTemplateColumns=`repeat(${s.cats.length},1fr)`;
+    ab.innerHTML=s.cats.map(c=>`<div class="aud-col">
+      <div class="aud-cat">${esc(c.emoji||'')} ${esc(c.title)}</div>
+      ${c.cards.map(k=>`<div class="aud-tile ${k.d?'done':''}">${k.p}</div>`).join('')}
+    </div>`).join('');
+  } else ab.classList.add('hidden');
+
+  // Action: toasted wager o final wager
   const ac=$('audAction');
   if(s.open&&s.open.phase==='toasted_wager'&&s.open.deciderId===me.id){
     ac.classList.remove('hidden');
-    const maxW=Math.min(s.toastMax,Math.max(me.s||0,5));
+    const maxW=Math.min(s.toastMax||1000,Math.max(me.s||0,5));
     const targets=s.players.filter(p=>p.id!==me.id);
     ac.innerHTML=`<div class="toast-wager">
       <h4>🍞 Scommetti!</h4>
