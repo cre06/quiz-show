@@ -958,6 +958,13 @@ function initHostPeer(){
       try{conn.send(snapshot())} catch{}
       updateSyncUI();
     });
+        // Aggiungi questo ascoltatore per i dati in arrivo dai client
+    conn.on('data', (data) => {
+      if (data && data.t === 'hello') {
+        console.log("Host: Client ha chiesto i dati, invio snapshot...");
+        try { conn.send(snapshot()); } catch(e){}
+      }
+    });
     conn.on('close', () => {
       conns.delete(conn);
       updateSyncUI();
@@ -1178,7 +1185,7 @@ function startAudience(hostId){
     peer=new Peer(undefined,PEER_OPTS);
     
     peer.on('open', () => {
-      console.log("Client: Peer aperto, tentativo di connessione a:", hostId);
+      console.log("Client: Peer aperto, ID:", peer.id);
       connect();
     });
     
@@ -1191,6 +1198,55 @@ function startAudience(hostId){
       if(peer.destroyed){peer=null;setTimeout(makePeer,3000)}else retry();
     });
   }
+  
+  function connect(){
+    if(!peer||!peer.open)return;
+    audStatus('connecting');
+    if(conn)try{conn.close()}catch{}
+    
+    console.log("Client: Tentativo di connessione a host:", hostId);
+    conn=peer.connect(hostId,{reliable:true});
+    
+    conn.on('open',()=>{
+      console.log("Client: CONNESSIONE APERTA! Richiesta dati...");
+      audStatus('online');
+      aud.last=Date.now();
+      // Invia un segnale all'host per farsi mandare i dati subito
+      conn.send({t:'hello'}); 
+    });
+    
+    conn.on('data',d=>{
+      aud.last=Date.now();
+      if(d && d.t==='state'){
+        console.log("Client: Dati ricevuti! Rendering...", d.cats ? d.cats.length + " categorie" : "no cats");
+        audRender(d);
+      }
+    });
+    
+    conn.on('close',()=>{
+      console.warn("Client: Connessione chiusa");
+      audStatus('offline');retry()
+    });
+    
+    conn.on('error',(err)=>{
+      console.error("Client Connection Error:", err);
+      audStatus('offline');retry()
+    });
+  }
+  
+  setInterval(()=>{
+    if(conn&&conn.open&&Date.now()-aud.last>14000){
+      console.warn("Client: Heartbeat scaduto");
+      audStatus('offline');connect()
+    }
+  },4000);
+  
+  document.addEventListener('visibilitychange',()=>{
+    if(!document.hidden&&(!conn||!conn.open))connect()
+  });
+  
+  audStatus('connecting');makePeer();
+}
   
   function connect(){
     if(!peer||!peer.open)return;
