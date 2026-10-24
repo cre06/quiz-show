@@ -1,0 +1,879 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ERM, ACTUALLY! – Serata tra Amici</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  body{font-family:'Plus Jakarta Sans',sans-serif;background:#0c0a14;color:#f3f4f6;
+       background-image:radial-gradient(at 10% 10%,rgba(109,40,217,.15) 0,transparent 50%),radial-gradient(at 90% 90%,rgba(236,72,153,.12) 0,transparent 50%);
+       background-attachment:fixed}
+  .font-heading{font-family:'Outfit',sans-serif}
+  .glass{background:rgba(26,21,40,.78);backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,.08)}
+  .modal{display:none;position:fixed;inset:0;z-index:50;background:rgba(2,6,23,.92);align-items:center;justify-content:center;padding:12px}
+  .modal.open{display:flex}
+  .wrong-highlight{background:#fbbf24;color:#1c1917;font-weight:800;padding:1px 6px;border-radius:6px;box-shadow:0 0 0 2px rgba(251,191,36,.35)}
+  .btn{padding:.45rem .8rem;border-radius:.6rem;font-weight:700;font-size:.75rem;border:1px solid #334155;background:#1e293b;color:#e2e8f0;transition:.15s;cursor:pointer}
+  .btn:hover{background:#334155}
+  .btn-amber{background:#f59e0b;color:#0f172a;border-color:#f59e0b}.btn-amber:hover{background:#fbbf24}
+  .btn-green{background:#059669;border-color:#059669;color:#fff}.btn-green:hover{background:#10b981}
+  .btn-red{background:#450a0a;border-color:#7f1d1d;color:#fca5a5}.btn-red:hover{background:#7f1d1d}
+  .btn-purple{background:#7c3aed;border-color:#7c3aed;color:#fff}.btn-purple:hover{background:#8b5cf6}
+  .inp{background:#020617;border:1px solid #334155;border-radius:.6rem;padding:.4rem .6rem;color:#fff;font-size:.8rem;width:100%}
+  .inp:focus{outline:none;border-color:#8b5cf6}
+  .tile{width:100%;padding:1rem 0;border-radius:.75rem;font-family:'Outfit',sans-serif;font-weight:800;font-size:1.15rem;color:#fbbf24;
+        background:rgba(15,12,27,.9);border:1px solid rgba(139,92,246,.35);transition:all .2s;cursor:pointer}
+  .tile:hover{transform:translateY(-3px);border-color:#fbbf24;box-shadow:0 10px 25px -5px rgba(245,158,11,.4)}
+  .tile-done{opacity:.3;text-decoration:line-through}
+  .aud-tile{padding:1rem 0;border-radius:.75rem;text-align:center;font-family:'Outfit',sans-serif;font-weight:800;font-size:1.2rem;color:#fbbf24;
+        background:rgba(15,12,27,.9);border:1px solid rgba(139,92,246,.35);transition:all .6s}
+  .tile-gone{opacity:0;transform:scale(.6);pointer-events:none}
+  .tile-open{border-color:#fbbf24;animation:pulse 1s infinite}
+  @keyframes pulse{50%{transform:scale(1.05);box-shadow:0 0 20px rgba(245,158,11,.5)}}
+  ::-webkit-scrollbar{width:8px;height:8px}::-webkit-scrollbar-thumb{background:#2a223d;border-radius:4px}
+</style>
+</head>
+<body>
+
+<!-- ======================= VISTA CONDUTTORE ======================= -->
+<div id="hostApp" class="min-h-screen flex flex-col">
+  <header class="glass sticky top-0 z-30 px-4 py-3 shadow-xl">
+    <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-3">
+      <div class="flex items-center gap-3">
+        <div class="bg-gradient-to-tr from-amber-500 to-amber-300 text-slate-950 px-3 py-2 rounded-xl font-heading font-black text-lg tracking-wider">⚠️ ERM, ACTUALLY!</div>
+        <span id="syncBadge" class="text-xs font-bold px-2.5 py-1 rounded-full border border-slate-700 bg-slate-900">● Sync…</span>
+      </div>
+      <div class="flex flex-wrap gap-2">
+        <button class="btn" onclick="openQR()">📱 QR Pubblico</button>
+        <button class="btn" onclick="openEditor()">✏️ Editor</button>
+        <button class="btn" onclick="openSudden()">⚔️ Spareggio</button>
+        <button class="btn" onclick="showFinal()">🏁 Fine partita</button>
+        <button class="btn" id="soundBtn" onclick="toggleSound()">🔊 Audio ON</button>
+        <button class="btn btn-red" onclick="resetGame()">🔄 Nuova partita</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-7xl mx-auto w-full p-4 sm:p-6 flex-grow grid grid-cols-1 lg:grid-cols-4 gap-6">
+    <aside class="lg:col-span-1 space-y-4">
+      <div class="glass rounded-2xl p-4">
+        <div class="flex items-center justify-between mb-3 pb-3 border-b border-purple-900/40">
+          <h2 class="font-heading font-bold text-amber-400">🏆 Concorrenti</h2>
+          <button class="btn btn-purple" onclick="addPlayer()">+ Giocatore</button>
+        </div>
+        <div id="playersList" class="space-y-2 max-h-[55vh] overflow-y-auto pr-1"></div>
+        <div class="mt-4 p-3 rounded-xl bg-purple-950/40 border border-purple-800/50 text-center">
+          <span class="block text-[10px] uppercase font-bold tracking-wider text-gray-400">Sceglie la tessera</span>
+          <span id="activeName" class="font-bold text-amber-400"></span>
+        </div>
+      </div>
+      <div class="glass rounded-2xl p-4 space-y-2 text-xs">
+        <h3 class="font-bold text-amber-400 uppercase tracking-wider text-[11px]">⚙️ Impostazioni</h3>
+        <label class="flex items-center gap-2"><input type="checkbox" id="optJokers" onchange="setOpt('jokersOn',this.checked)"> Joker casuali sulle tessere</label>
+        <label class="flex items-center gap-2"><input type="checkbox" id="optScores" onchange="setOpt('showScores',this.checked)"> Mostra punteggi sui telefoni</label>
+      </div>
+      <div class="glass rounded-2xl p-4 text-[11px] text-slate-400 space-y-1">
+        <h3 class="font-bold text-amber-400 uppercase tracking-wider">📖 Regole lampo</h3>
+        <ul class="list-disc pl-4 space-y-1">
+          <li>Ogni tessera ha <b>3 errori</b> nascosti.</li>
+          <li>Chi urla <b>"Erm, actually!"</b> blocca la lettura.</li>
+          <li>Ogni errore vale <b>1/3</b> dei punti.</li>
+          <li>Correzione sbagliata o inventata = <b>−1/3</b>.</li>
+          <li>Chi azzecca per primo sceglie la tessera successiva.</li>
+        </ul>
+      </div>
+    </aside>
+
+    <section class="lg:col-span-3 space-y-6">
+      <div class="overflow-x-auto pb-2"><div id="gameBoard" class="grid gap-3 sm:gap-4"></div></div>
+      <div class="glass rounded-2xl p-4 border-2 border-amber-500/40 flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div class="text-center sm:text-left">
+          <div class="inline-block px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 text-xs font-bold border border-amber-500/40">🔥 SFIDA FINALE</div>
+          <h3 class="text-xl font-heading font-extrabold">ERM, ACTUALLY! SHOWDOWN</h3>
+          <p class="text-xs text-slate-300">Tessera speciale con 3 errori ad alta difficoltà.</p>
+        </div>
+        <button id="showdownBtn" onclick="openCard('showdown')" class="w-full sm:w-auto px-6 py-3.5 rounded-xl font-heading font-black text-slate-950 bg-gradient-to-r from-amber-400 to-amber-500 shadow-lg">⚡ <span id="showdownPts">1000</span> PUNTI</button>
+      </div>
+    </section>
+  </main>
+</div>
+
+<!-- ======================= VISTA PUBBLICO ======================= -->
+<div id="audApp" class="min-h-screen flex flex-col hidden">
+  <header class="glass px-4 py-3 flex items-center justify-between sticky top-0 z-30">
+    <div class="font-heading font-black text-amber-400 tracking-wider">⚠️ ERM, ACTUALLY!</div>
+    <span id="audStatus" class="text-xs font-bold px-2.5 py-1 rounded-full border border-slate-700 bg-slate-900">● …</span>
+  </header>
+  <div id="audBanner" class="px-4 pt-3"></div>
+  <main id="audMain" class="flex-grow p-4 overflow-x-auto"><p class="text-center text-slate-400 mt-10">Connessione al conduttore…</p></main>
+</div>
+
+<!-- ======================= MODALE TESSERA ======================= -->
+<div id="cardModal" class="modal">
+  <div class="glass w-full max-w-4xl max-h-[94vh] rounded-3xl flex flex-col overflow-hidden">
+    <div class="px-5 py-3 border-b border-purple-900/50 bg-purple-950/50 flex items-center justify-between">
+      <div class="flex items-center gap-2">
+        <span id="mCat" class="px-3 py-1 rounded-lg text-xs font-bold uppercase bg-purple-900/60 text-purple-300 border border-purple-700/50"></span>
+        <span id="mPts" class="px-3 py-1 rounded-lg text-xs font-black bg-amber-500/20 text-amber-400 border border-amber-500/40"></span>
+      </div>
+      <button class="btn" onclick="closeCard()">✕</button>
+    </div>
+    <div class="p-5 overflow-y-auto space-y-5 flex-grow">
+      <div id="mJoker" class="hidden"></div>
+
+      <div class="flex flex-col sm:flex-row items-center justify-between gap-4 p-4 rounded-2xl bg-purple-950/30 border border-purple-800/40">
+        <div class="flex items-center gap-3 flex-wrap">
+          <button onclick="triggerBuzz()" class="px-6 py-3 rounded-xl font-heading font-black text-slate-950 bg-amber-400 hover:bg-amber-300 active:scale-95 transition text-lg">📣 ERM, ACTUALLY!</button>
+          <span id="buzzStatus" class="hidden text-xs font-bold text-amber-300 bg-amber-950/80 px-3 py-1.5 rounded-lg border border-amber-700/50">🚨 INTERROTTO!</span>
+          <button id="buzzRelease" class="hidden btn" onclick="releaseBuzz()">↩ Riprendi lettura</button>
+        </div>
+        <div class="flex items-center gap-3">
+          <div class="text-right">
+            <span class="block text-[10px] text-slate-400 font-bold uppercase">Timer silenzio</span>
+            <span id="timerDisplay" class="font-heading font-extrabold text-2xl text-amber-400">10s</span>
+          </div>
+          <button id="timerBtn" class="btn" onclick="toggleTimer()">▶</button>
+          <button class="btn" onclick="resetTimer()">⟲</button>
+        </div>
+      </div>
+
+      <div class="space-y-2">
+        <div class="text-xs font-bold text-slate-400 uppercase tracking-wider">🎤 Testo da leggere <span class="text-purple-300 normal-case italic font-normal">— le parti gialle sono gli errori (non leggerle in modo diverso!)</span></div>
+        <div id="mText" class="p-5 rounded-2xl bg-slate-900/90 border border-purple-900/40 text-lg leading-loose shadow-inner"></div>
+      </div>
+
+      <div id="mTrap" class="hidden">
+        <div class="p-3.5 rounded-xl bg-amber-950/40 border border-amber-600/40 text-amber-200 text-xs flex gap-2">
+          <span>⚠️</span><div><b id="mTrapType" class="text-amber-300"></b><div id="mTrapNote"></div></div>
+        </div>
+      </div>
+
+      <div class="space-y-3">
+        <div class="flex items-center justify-between">
+          <h4 class="font-heading font-bold text-amber-400">✅ I 3 errori nascosti</h4>
+          <button class="btn" onclick="revealAll()">Rivela tutti</button>
+        </div>
+        <div id="mErrors" class="space-y-2.5"></div>
+      </div>
+
+      <div class="p-4 rounded-2xl bg-slate-900/80 border border-slate-800 space-y-3">
+        <h5 class="text-xs font-bold text-slate-400 uppercase tracking-wider">Assegna o rimuovi punti</h5>
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div class="space-y-2">
+            <select id="assignSel" class="inp"></select>
+            <div class="flex gap-2"><input id="manualPts" type="number" class="inp" placeholder="± punti"><button class="btn" onclick="awardManual()">Applica</button></div>
+          </div>
+          <div class="sm:col-span-2 grid grid-cols-5 gap-2">
+            <button class="btn btn-green" onclick="award(1/3)">+1/3<br><span id="pA" class="opacity-80"></span></button>
+            <button class="btn btn-green" onclick="award(2/3)">+2/3<br><span id="pB" class="opacity-80"></span></button>
+            <button class="btn btn-green" onclick="award(1)">+100%<br><span id="pC" class="opacity-80"></span></button>
+            <button id="multBtn" class="btn" onclick="toggleMult()">×2<br><span id="multTxt" class="opacity-80">off</span></button>
+            <button class="btn btn-red" onclick="award(-1/3)">−1/3<br><span id="pD" class="opacity-80"></span></button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="px-5 py-3 border-t border-purple-900/50 bg-purple-950/40 flex items-center justify-between">
+      <button id="doneBtn" class="btn btn-amber" onclick="toggleCompleted()"></button>
+      <button class="btn btn-purple" onclick="closeCard()">Chiudi tessera</button>
+    </div>
+  </div>
+</div>
+
+<!-- ======================= MODALE QR ======================= -->
+<div id="qrModal" class="modal">
+  <div class="glass w-full max-w-md rounded-3xl p-6 space-y-4 text-center max-h-[94vh] overflow-y-auto">
+    <div class="flex justify-between items-center"><h3 class="font-heading font-bold text-amber-400 text-lg">📱 Tabellone sui telefoni</h3><button class="btn" onclick="$('qrModal').classList.remove('open')">✕</button></div>
+    <div id="qrBox" class="mx-auto bg-white p-3 rounded-2xl inline-block min-w-[264px] min-h-[264px] text-slate-700 text-sm flex items-center justify-center"></div>
+    <div id="qrUrl" class="text-[11px] text-slate-400 break-all"></div>
+    <div id="qrWarn" class="hidden text-xs text-amber-300 bg-amber-950/50 border border-amber-700/40 rounded-xl p-3 text-left"></div>
+    <div class="text-left space-y-1">
+      <label class="text-[11px] text-slate-400">URL pubblico dove hai caricato questo file (GitHub Pages, Netlify…):</label>
+      <div class="flex gap-2"><input id="pubUrl" class="inp" placeholder="https://tuo-sito.netlify.app/erm.html"><button class="btn btn-purple" onclick="savePubUrl()">Salva</button></div>
+    </div>
+    <div class="flex gap-2 justify-center"><button class="btn" onclick="copyAudUrl()">📋 Copia link</button></div>
+    <div id="qrCount" class="text-xs text-emerald-400 font-bold"></div>
+  </div>
+</div>
+
+<!-- ======================= MODALE EDITOR ======================= -->
+<div id="editorModal" class="modal">
+  <div class="glass w-full max-w-5xl max-h-[94vh] rounded-3xl flex flex-col overflow-hidden">
+    <div class="px-5 py-3 border-b border-purple-900/50 bg-purple-950/50 flex items-center justify-between flex-wrap gap-2">
+      <div id="edTabs" class="flex gap-2 flex-wrap"></div>
+      <button class="btn" onclick="$('editorModal').classList.remove('open')">✕ Chiudi</button>
+    </div>
+    <div id="edBody" class="p-5 overflow-y-auto flex-grow space-y-4"></div>
+  </div>
+</div>
+
+<!-- ======================= MODALE SPAREGGIO ======================= -->
+<div id="sdModal" class="modal">
+  <div class="glass w-full max-w-3xl max-h-[94vh] rounded-3xl flex flex-col overflow-hidden">
+    <div class="px-5 py-3 border-b border-purple-900/50 bg-purple-950/50 flex items-center justify-between">
+      <h3 class="font-heading font-bold text-amber-400">⚔️ Sudden Death Arena</h3>
+      <button class="btn" onclick="closeSudden()">✕ Chiudi</button>
+    </div>
+    <div id="sdBody" class="p-5 overflow-y-auto space-y-4"></div>
+  </div>
+</div>
+
+<!-- ======================= MODALE FINALE ======================= -->
+<div id="finalModal" class="modal">
+  <div class="glass w-full max-w-3xl max-h-[94vh] rounded-3xl flex flex-col overflow-hidden">
+    <div class="px-5 py-3 border-b border-purple-900/50 bg-purple-950/50 flex items-center justify-between">
+      <h3 class="font-heading font-bold text-amber-400">🏆 Classifica finale</h3>
+      <button class="btn" onclick="closeFinal()">↩ Torna al tabellone</button>
+    </div>
+    <div id="finalBody" class="p-5 overflow-y-auto space-y-6"></div>
+  </div>
+</div>
+
+<div id="toast" class="fixed bottom-4 left-1/2 -translate-x-1/2 z-[70] hidden px-4 py-2 rounded-xl bg-slate-800 border border-slate-600 text-sm font-semibold shadow-xl"></div>
+
+<script>
+/* ============================================================
+   COSTANTI & UTILITY
+   ============================================================ */
+const DECK_KEY='erm_deck_v2', GAME_KEY='erm_game_v2', SET_KEY='erm_settings_v2', PEER_KEY='erm_peer_id_v2';
+// Per reti mobili molto restrittive (CGNAT/NAT simmetrico) aggiungi qui un server TURN, es.:
+// {urls:'turn:tuo.server:3478',username:'user',credential:'pass'}
+const PEER_OPTS={config:{iceServers:[{urls:'stun:stun.l.google.com:19302'},{urls:'stun:stun1.l.google.com:19302'}]}};
+const TRAPS={none:'Nessuna trappola',bait:'Esca: affermazione VERA che sembra falsa',debate:'Dibattito / zona grigia',nitpick:'Pignoleria accettabile'};
+const JOKERS={
+  double:{name:'Double or Nothing',icon:'🎲',desc:'Il prossimo punteggio assegnato (positivo o negativo) vale ×2!'},
+  steal:{name:'Steal Points',icon:'🦹',desc:'I prossimi punti guadagnati vengono sottratti al leader della classifica.'},
+  bomb:{name:'Time Bomb',icon:'💣',desc:'Il timer del silenzio è di soli 5 secondi!'}
+};
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const uid=()=>'x'+Math.random().toString(36).slice(2,9);
+const fmtBold=s=>esc(s).replace(/\*\*(.+?)\*\*/g,'<strong class="text-amber-300">$1</strong>');
+// EVIDENZIATORE: *parola* -> <span class="wrong-highlight">parola</span> (dopo escape HTML)
+const highlight=s=>esc(s).replace(/\*(.+?)\*/g,'<span class="wrong-highlight">$1</span>');
+const load=k=>{try{return JSON.parse(localStorage.getItem(k))}catch{return null}};
+const store=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch(e){console.warn(e)}};
+const shuffle=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a};
+function toast(m){const t=$('toast');t.textContent=m;t.classList.remove('hidden');clearTimeout(toast.t);toast.t=setTimeout(()=>t.classList.add('hidden'),2600)}
+
+/* ============================================================
+   AUDIO (Web Audio API)
+   ============================================================ */
+let audioCtx=null;
+function initAudio(){const A=window.AudioContext||window.webkitAudioContext;if(!audioCtx&&A)audioCtx=new A();if(audioCtx&&audioCtx.state==='suspended')audioCtx.resume()}
+function tone(f,t0,d,type='sine',v=.2){const o=audioCtx.createOscillator(),g=audioCtx.createGain();o.type=type;o.frequency.setValueAtTime(f,t0);g.gain.setValueAtTime(v,t0);g.gain.exponentialRampToValueAtTime(.001,t0+d);o.connect(g);g.connect(audioCtx.destination);o.start(t0);o.stop(t0+d+.02)}
+function playSound(t){
+  if(!settings.sound)return;
+  try{initAudio();const n=audioCtx.currentTime;
+    if(t==='buzz'){tone(160,n,.45,'sawtooth',.3);tone(110,n+.05,.4,'square',.12)}
+    else if(t==='correct'){[523,659,784].forEach((f,i)=>tone(f,n+i*.1,.25,'sine',.2))}
+    else if(t==='wrong'){tone(180,n,.2,'square',.2);tone(110,n+.18,.28,'square',.2)}
+    else if(t==='tick'){tone(900,n,.05,'triangle',.08)}
+    else if(t==='joker'){[392,523,659,784,1046].forEach((f,i)=>tone(f,n+i*.08,.2,'triangle',.2))}
+    else if(t==='win'){[523,659,784,1046,784,1046,1318].forEach((f,i)=>tone(f,n+i*.13,.3,'sine',.22))}
+  }catch(e){console.log(e)}
+}
+function toggleSound(){settings.sound=!settings.sound;store(SET_KEY,settings);$('soundBtn').textContent=settings.sound?'🔊 Audio ON':'🔇 Audio OFF'}
+
+/* ============================================================
+   MAZZO DI DEFAULT
+   ============================================================ */
+const C=(p,text,sol,trap,type)=>({points:p,text,solutions:sol.map(([err,corr])=>({err,corr})),trapType:trap?(type||'bait'):'none',trapNote:trap||''});
+function defaultDeck(){
+  const cats=[
+  {id:'cinema',title:'Cinema',emoji:'🎬',cards:[
+    C(100,"Titanic, il kolossal diretto da *Steven Spielberg*, uscito nel 1997, ha stracciato i botteghini e ha vinto *14 Oscar*. La commovente canzone My Heart Will Go On è cantata da *Whitney Houston*. Leo DiCaprio ringrazia ancora oggi quella porta galleggiante.",
+      [["Steven Spielberg","Il regista è **James Cameron**."],["14 Oscar","Gli Oscar vinti sono **11** (14 erano le nomination)."],["Whitney Houston","La canzone è di **Céline Dion**."]],
+      "La porta: in due ci stavano o no? Non è un errore, è un dibattito. Non assegnare punti a chi la 'corregge'.","debate"),
+    C(200,"Nella Compagnia dell'Anello, diretta da Peter Jackson, Frodo deve distruggere l'Unico Anello, *forgiato dal malvagio Saruman*. Ad accompagnarlo c'è il fedele giardiniere *Pipino*. Le riprese si sono svolte tra i paesaggi mozzafiato dell'*Australia*.",
+      [["forgiato da Saruman","L'Anello fu forgiato da **Sauron**."],["giardiniere Pipino","Il giardiniere fedele è **Sam (Samvise Gamgee)**."],["Australia","Le riprese sono state in **Nuova Zelanda**."]]),
+    C(300,"Toy Story, uscito nel *1993*, è il primo lungometraggio interamente in computer grafica, prodotto dalla *DreamWorks*. Nella versione originale le voci sono di *Tim Allen per il cowboy Woody e Tom Hanks per Buzz Lightyear*.",
+      [["1993","Uscì nel **1995**."],["DreamWorks","Lo ha prodotto la **Pixar** (distribuito da Disney)."],["Voci invertite","Le voci sono invertite: **Woody = Tom Hanks, Buzz = Tim Allen**."]],
+      "Le voci invertite contano come UN solo errore: accetta la correzione solo se è completa.","nitpick"),
+    C(400,"Pulp Fiction di Quentin Tarantino, uscito nel *1996*, ha vinto il *Leone d'Oro a Venezia*. Il killer in giacca e cravatta *Vincent Vega è interpretato da Samuel L. Jackson*, che balla con Uma Thurman in una gara di twist. Il Royale with Cheese, sia chiaro, è il nome francese del Quarto di Libbra.",
+      [["1996","Il film è del **1994**."],["Leone d'Oro a Venezia","Ha vinto la **Palma d'Oro a Cannes**."],["Vincent Vega = Samuel L. Jackson","Vincent Vega è **John Travolta**. Samuel L. Jackson è Jules."]],
+      "Il Royale with Cheese è CORRETTO (è il nome francese del Quarter Pounder). Chi lo corregge perde punti."),
+    C(500,"Inception di Christopher Nolan, del 2010, ci insegna a distinguere sogno e realtà grazie al totem di Cobb, *un dado truccato*. La colonna sonora, con quel famosissimo BRAAAM, è di *John Williams*. Il film ha vinto *l'Oscar come miglior film*, tra le tante statuette.",
+      [["un dado truccato","Il totem di Cobb è una **trottola**."],["John Williams","La colonna sonora è di **Hans Zimmer**."],["Oscar come miglior film","Ha vinto **4 Oscar tecnici**, **non** miglior film."]])
+  ]},
+  {id:'videogames',title:'Videogames',emoji:'🎮',cards:[
+    C(100,"Super Mario è nato dalla fantasia di Shigeru Miyamoto per *Sega*. Il nostro baffuto idraulico ha un fratello di nome *Wario* e deve salvare ogni volta la principessa *Zelda* dalle grinfie di Bowser.",
+      [["Sega","È un personaggio **Nintendo**."],["Wario","Il fratello è **Luigi**."],["Zelda","La principessa è **Peach**."]]),
+    C(200,"Minecraft è stato creato dal programmatore *norvegese* Markus 'Notch' Persson, ed è stato venduto nel 2014 per circa 2,5 miliardi di dollari a *Google*. Per 'finire' il gioco bisogna sconfiggere il boss finale, il *Wither*.",
+      [["norvegese","Notch è **svedese**."],["Google","L'ha comprato **Microsoft**."],["Wither","Il boss finale è l'**Ender Dragon**; il Wither è opzionale."]]),
+    C(300,"Pokémon Rosso e Blu sono usciti nel 1996 in Giappone per *Game Boy Advance*. I Pokémon della prima generazione sono *251*. Il professore che ti regala il primo Pokémon è il *Professor Elm*.",
+      [["Game Boy Advance","Erano per **Game Boy** (il GBA è del 2001)."],["251","I Pokémon della prima generazione sono **151**."],["Professor Elm","Il professore è **Oak**. Elm è quello di Johto."]],
+      "In Giappone uscirono come Rosso e Verde (in Occidente Rosso e Blu). Qui puoi essere pignolo.","nitpick"),
+    C(400,"In The Legend of Zelda, il protagonista silenzioso si chiama *Zelda* e deve fermare il malvagio Ganon nel regno di Hyrule. La Triforza è composta da Potere, Saggezza e *Forza*. Breath of the Wild è uscito su Switch nel *2013*.",
+      [["Zelda (protagonista)","Il protagonista è **Link**; Zelda è la principessa."],["Forza","La terza parte della Triforza è il **Coraggio**."],["2013","Breath of the Wild è del **2017**."]]),
+    C(500,"Elden Ring, uscito nel *2020*, è stato sviluppato da *Capcom*, con il worldbuilding firmato da George R. R. Martin. A dirigerlo è il famigerato creatore dei Souls, *Hideo Kojima*.",
+      [["2020","È uscito nel **2022**."],["Capcom","Lo sviluppatore è **FromSoftware**."],["Hideo Kojima","Il direttore è **Hidetaka Miyazaki**; Kojima è quello di Metal Gear."]],
+      "George R. R. Martin è VERO (ha scritto il mito del mondo). È l'esca del round.")
+  ]},
+  {id:'scienza',title:'Scienza & Natura',emoji:'🔬',cards:[
+    C(100,"Il polpo è un animale affascinante: ha tre cuori e il suo sangue è *rosso*. Possiede *dieci braccia* e vive esclusivamente in *acqua dolce*, come i laghetti del parco sotto casa.",
+      [["sangue rosso","Il sangue è **blu** (emocianina a base di rame)."],["dieci braccia","Ha **otto** braccia (dieci sono quelle dei calamari)."],["acqua dolce","Vive in **mare**."]]),
+    C(200,"Il pianeta più caldo del Sistema Solare è *Mercurio*, perché è il più vicino al Sole. La luce solare impiega circa *8 secondi* ad arrivare sulla Terra. E Saturno è l'*unico* pianeta con gli anelli.",
+      [["Mercurio","Il più caldo è **Venere** (effetto serra)."],["8 secondi","La luce impiega circa **8 minuti**."],["l'unico con anelli","Hanno gli anelli anche **Giove, Urano e Nettuno**."]]),
+    C(300,"Un adulto ha in media *306 ossa*. L'osso più piccolo del corpo umano è la *rotula*. Per fortuna siamo geniali: usiamo solo il *10%* del nostro cervello, il resto è lì per bellezza.",
+      [["306 ossa","Le ossa sono **206**."],["rotula","Il più piccolo è la **staffa** (nell'orecchio)."],["10% del cervello","È un **mito**: usiamo tutto il cervello."]]),
+    C(400,"Il diamante e la grafite sono fatti dello stesso elemento, il *silicio*. Il suono viaggia più veloce nell'*aria* che nell'acqua. Il simbolo chimico del potassio è la *P*.",
+      [["silicio","L'elemento è il **carbonio**."],["più veloce nell'aria","Il suono è più veloce **nell'acqua** (~1.480 m/s contro 343)."],["simbolo P","Il potassio è **K**; la P è il fosforo."]]),
+    C(500,"Dal punto di vista botanico il pomodoro è una bacca, e fin qui ci siamo. Il banano è un *albero*, mentre la fragola è una *bacca vera e propria*. Le arachidi, infine, maturano *sui rami*.",
+      [["albero","Il banano è un'**erba gigante**."],["fragola = bacca vera","La fragola è un **falso frutto**; i veri frutti sono gli acheni (i puntini)."],["sui rami","Le arachidi maturano **sottoterra** (sono legumi)."]],
+      "Il pomodoro come bacca è VERO. Chi lo corregge perde punti.")
+  ]},
+  {id:'internet',title:'Internet & Meme',emoji:'🌐',cards:[
+    C(100,"Doge, il meme del 'such wow, very meme', mostra un cane di razza *Husky*. Da lui è nata la criptovaluta Dogecoin, nata nel *2021* ed *ideata da Elon Musk*.",
+      [["Husky","Il cane è uno **Shiba Inu**."],["2021","Dogecoin è del **2013**."],["ideata da Elon Musk","L'hanno creata **Billy Markus e Jackson Palmer**, per scherzo."]]),
+    C(200,"Il Rickroll consiste nell'attirare qualcuno su un link per fargli ascoltare Never Gonna Give You Up. L'autore è Rick Astley, cantante *americano*. La canzone è del *1997* e il meme è nato su *Reddit*.",
+      [["americano","Rick Astley è **britannico**."],["1997","La canzone è del **1987**."],["Reddit","Il meme è nato su **4chan** (evoluzione del 'duckroll')."]]),
+    C(300,"YouTube è stato fondato nel *2008* da tre ex dipendenti di PayPal. Il primo video della storia, Me at the zoo, mostra Jawed Karim davanti a dei *gatti*. La piattaforma è poi stata acquistata da *Facebook*.",
+      [["2008","È stato fondato nel **2005**."],["gatti","Il video mostra degli **elefanti**."],["Facebook","L'ha comprata **Google** nel 2006 (~1,65 miliardi di dollari)."]]),
+    C(400,"Il primo tweet della storia, 'just setting up my twttr', è stato scritto da *Elon Musk*. All'inizio il limite era di 140 caratteri. Il social è stato rinominato X nel *2021* e il suo vecchio logo era un *pettirosso* azzurro.",
+      [["Elon Musk","L'ha scritto **Jack Dorsey** (2006)."],["2021","Il rebranding in X è del **luglio 2023**."],["pettirosso","Il logo era un **uccellino azzurro (bluebird)**."]],
+      "I 140 caratteri sono VERI: è l'esca."),
+    C(500,"Grumpy Cat, la gatta imbronciata più famosa del web, si chiamava in realtà Tardar Sauce. Era un *maschio* e viveva in *Florida*. La sua faccia perennemente scontenta era dovuta a una forma di nanismo felino. Nel film di Natale a lei dedicato, la voce è di *Jennifer Lawrence*.",
+      [["maschio","Era una **femmina**."],["Florida","Viveva in **Arizona**."],["Jennifer Lawrence","La voce nel film è di **Aubrey Plaza**."]],
+      "Il nome Tardar Sauce e il nanismo sono VERI. Chi li corregge perde punti.")
+  ]}];
+  cats.forEach(c=>c.cards.forEach(k=>k.id=c.id+'-'+k.points));
+  const show=C(1000,"Nel mega evento finale: il primo film di Harry Potter è stato diretto da *Steven Spielberg* nel 2001. Nel frattempo, la canzone Bohemian Rhapsody dei Queen, scritta da Freddie Mercury, è uscita nel *1985*. E per finire, la Gioconda di Leonardo da Vinci si trova conservata al *British Museum di Londra*.",
+    [["Steven Spielberg","Il regista è **Chris Columbus**."],["1985","Bohemian Rhapsody è del **1975**."],["British Museum di Londra","La Gioconda è al **Louvre di Parigi**."]],
+    "SHOWDOWN: vale 1000 punti (≈333 a errore). Freddie Mercury come autore è VERO (esca).");
+  show.id='showdown';
+  return {version:2,categories:cats,showdown:show,sudden:[
+    {q:"Qual è la capitale dell'Australia?",a:"Canberra"},
+    {q:"Quanti giocatori scendono in campo per squadra in una partita di calcio?",a:"11"},
+    {q:"Chi ha dipinto La notte stellata?",a:"Vincent van Gogh"},
+    {q:"Qual è il simbolo chimico dell'oro?",a:"Au"},
+    {q:"In che anno è uscito il primo iPhone?",a:"2007"},
+    {q:"Qual è il pianeta più grande del Sistema Solare?",a:"Giove"}
+  ]};
+}
+
+/* ============================================================
+   STATO
+   ============================================================ */
+function newGame(){return{players:[{id:1,name:'Squadra Alfa',score:0,found:0,wrong:0},{id:2,name:'Squadra Beta',score:0,found:0,wrong:0}],activeId:1,completed:{},solved:{},jokers:{},ended:false}}
+let deck=load(DECK_KEY)||defaultDeck();
+let game=load(GAME_KEY)||newGame();
+let settings=Object.assign({sound:true,showScores:false,jokersOn:true,publicUrl:''},load(SET_KEY)||{});
+game.players.forEach(p=>{p.found=p.found||0;p.wrong=p.wrong||0});
+let cur=null, timerInt=null, timerLeft=10;
+const saveDeck=()=>store(DECK_KEY,deck), saveGame=()=>store(GAME_KEY,game);
+function commit(){saveGame();renderPlayers();renderBoard();broadcast()}
+function findCard(id){
+  if(id==='showdown')return{card:deck.showdown,cat:{title:'Showdown Finale'}};
+  for(const c of deck.categories){const k=c.cards.find(x=>x.id===id);if(k)return{card:k,cat:c}}
+  return null;
+}
+function allCards(){return deck.categories.flatMap(c=>c.cards).concat([deck.showdown])}
+function purgeOrphans(){
+  const ids=new Set(allCards().map(c=>c.id));
+  ['completed','solved','jokers'].forEach(k=>Object.keys(game[k]).forEach(id=>{if(!ids.has(id))delete game[k][id]}));
+}
+function setOpt(k,v){settings[k]=v;store(SET_KEY,settings);broadcast()}
+
+/* ============================================================
+   RENDER: TABELLONE & GIOCATORI (conduttore)
+   ============================================================ */
+function renderBoard(){
+  const el=$('gameBoard');
+  el.style.gridTemplateColumns=`repeat(${Math.max(deck.categories.length,1)},minmax(120px,1fr))`;
+  el.innerHTML=deck.categories.map(c=>{
+    const tiles=c.cards.slice().sort((a,b)=>a.points-b.points).map(k=>{
+      const done=!!game.completed[k.id];
+      return `<button class="tile ${done?'tile-done':''}" data-id="${esc(k.id)}" onclick="openCard(this.dataset.id)">${k.points}</button>`;
+    }).join('');
+    return `<div class="space-y-3 flex flex-col"><div class="glass p-3 rounded-xl text-center"><div class="text-xl">${esc(c.emoji)}</div><h3 class="font-heading font-bold text-xs uppercase tracking-wider">${esc(c.title)}</h3></div>${tiles}</div>`;
+  }).join('')||'<p class="text-slate-400">Nessuna categoria: aprila dall\'Editor.</p>';
+  $('showdownPts').textContent=deck.showdown.points;
+  $('showdownBtn').style.opacity=game.completed.showdown?.35:1;
+  $('optJokers').checked=settings.jokersOn;$('optScores').checked=settings.showScores;
+  $('soundBtn').textContent=settings.sound?'🔊 Audio ON':'🔇 Audio OFF';
+}
+function fillSelect(){
+  const sel=$('assignSel');if(!sel)return;
+  const prev=sel.value;
+  sel.innerHTML=game.players.map(p=>`<option value="${p.id}">${esc(p.name)} (${p.score} pt)</option>`).join('');
+  const want=game.players.some(p=>String(p.id)===prev)?prev:String(game.activeId);
+  sel.value=want;
+}
+function renderPlayers(){
+  const top=Math.max(...game.players.map(p=>p.score),1);
+  $('playersList').innerHTML=game.players.map(p=>{
+    const act=p.id===game.activeId;
+    return `<div class="p-2.5 rounded-xl border ${act?'bg-purple-900/40 border-amber-400/80':'bg-slate-900/60 border-slate-800'} flex items-center justify-between gap-2">
+      <div class="flex items-center gap-2 overflow-hidden">
+        <button onclick="setActive(${p.id})" title="Imposta come attivo">${act?'🟡':'⚪'}</button>
+        <span class="font-bold text-xs truncate cursor-pointer" title="Clic per rinominare" onclick="renamePlayer(${p.id})">${p.score===top&&p.score>0?'👑 ':''}${esc(p.name)}</span>
+      </div>
+      <div class="flex items-center gap-1">
+        <span class="font-heading font-extrabold text-amber-400 cursor-pointer" title="Clic per impostare il punteggio" onclick="setScore(${p.id})">${p.score}</span>
+        <button class="btn !px-1.5" onclick="adjust(${p.id},50)">+50</button>
+        <button class="btn !px-1.5" onclick="adjust(${p.id},-50)">−50</button>
+        <button class="btn !px-1.5" onclick="removePlayer(${p.id})">🗑</button>
+      </div></div>`;
+  }).join('')||'<p class="text-xs text-slate-500 italic text-center">Nessun giocatore</p>';
+  const a=game.players.find(p=>p.id===game.activeId);
+  $('activeName').textContent=a?a.name:'—';
+  fillSelect();
+}
+function addPlayer(){const n=prompt('Nome del giocatore o squadra:','Giocatore '+(game.players.length+1));if(!n||!n.trim())return;const id=Date.now()+Math.floor(Math.random()*999);game.players.push({id,name:n.trim().slice(0,30),score:0,found:0,wrong:0});if(!game.players.some(p=>p.id===game.activeId))game.activeId=id;commit()}
+function removePlayer(id){if(!confirm('Rimuovere questo giocatore?'))return;game.players=game.players.filter(p=>p.id!==id);if(game.activeId===id)game.activeId=game.players[0]?.id??null;commit()}
+function renamePlayer(id){const p=game.players.find(x=>x.id===id);const n=prompt('Nuovo nome:',p.name);if(n&&n.trim()){p.name=n.trim().slice(0,30);commit()}}
+function setScore(id){const p=game.players.find(x=>x.id===id);const v=prompt('Imposta punteggio:',p.score);if(v===null)return;const n=parseInt(v,10);if(!isNaN(n)){p.score=n;commit()}}
+function setActive(id){game.activeId=id;commit()}
+function adjust(id,amt){const p=game.players.find(x=>x.id===id);if(!p)return;p.score+=amt;playSound(amt>=0?'correct':'wrong');commit()}
+
+/* ============================================================
+   MODALE TESSERA
+   ============================================================ */
+function openCard(id){
+  const f=findCard(id);if(!f)return;initAudio();
+  cur={id,card:f.card,catTitle:f.cat.title,mult:false,steal:false,buzzed:false,revealed:[false,false,false],timerStart:10};
+  let j=game.jokers[id];
+  if(!j&&settings.jokersOn&&id!=='showdown'&&!game.completed[id]&&Math.random()<0.25){
+    j={type:shuffle(Object.keys(JOKERS))[0],used:false};game.jokers[id]=j;saveGame();playSound('joker');
+  }
+  if(j&&!j.used){if(j.type==='double')cur.mult=true;if(j.type==='steal')cur.steal=true;if(j.type==='bomb')cur.timerStart=5}
+  renderCardModal();
+  $('cardModal').classList.add('open');
+  broadcast();
+}
+function renderCardModal(){
+  const k=cur.card;
+  $('mCat').textContent=cur.catTitle;$('mPts').textContent=k.points+' Punti';
+  $('mText').innerHTML=highlight(k.text);
+  if(k.trapType!=='none'||k.trapNote){$('mTrap').classList.remove('hidden');$('mTrapType').textContent='Nota per il conduttore · '+(TRAPS[k.trapType]||'');$('mTrapNote').textContent=k.trapNote||''}
+  else $('mTrap').classList.add('hidden');
+  const t3=Math.round(k.points/3);
+  $('pA').textContent='+'+t3;$('pB').textContent='+'+Math.round(k.points*2/3);$('pC').textContent='+'+k.points;$('pD').textContent='−'+t3;
+  const j=game.jokers[cur.id],jb=$('mJoker');
+  if(j&&!j.used){const J=JOKERS[j.type];jb.classList.remove('hidden');jb.innerHTML=`<div class="p-3.5 rounded-xl bg-gradient-to-r from-pink-900/60 to-purple-900/60 border border-pink-500/50 flex items-center gap-3"><span class="text-3xl">${J.icon}</span><div><div class="font-heading font-black text-pink-300 uppercase text-sm">🃏 JOKER: ${J.name}</div><div class="text-xs text-pink-100">${J.desc}</div></div></div>`}
+  else jb.classList.add('hidden');
+  $('buzzStatus').classList.toggle('hidden',!cur.buzzed);$('buzzRelease').classList.toggle('hidden',!cur.buzzed);
+  resetTimer();renderErrors();updateDoneUI();updateMultUI();fillSelect();
+}
+function renderErrors(){
+  const sv=game.solved[cur.id]||[false,false,false];
+  $('mErrors').innerHTML=cur.card.solutions.map((s,i)=>{
+    const rev=cur.revealed[i],ok=!!sv[i];
+    return `<div class="p-3.5 rounded-xl border ${ok?'bg-emerald-950/40 border-emerald-600/60':rev?'bg-purple-950/60 border-purple-500/50':'bg-slate-900/60 border-slate-800'}">
+      <div class="flex items-start justify-between gap-3">
+        <div class="space-y-1">
+          <span class="text-[10px] font-bold uppercase tracking-wider ${rev?'text-amber-400':'text-slate-500'}">Errore ${i+1} ${ok?'· ✓ Corretto':''}</span>
+          ${rev?`<p class="text-sm"><span class="line-through opacity-60">${esc(s.err)}</span> → ${fmtBold(s.corr)}</p>`:`<p class="text-sm text-slate-500 italic">Nascosto</p>`}
+        </div>
+        <div class="flex gap-2 flex-shrink-0">
+          <button class="btn" onclick="toggleReveal(${i})">${rev?'Nascondi':'Rivela'}</button>
+          <button class="btn ${ok?'btn-green':''}" onclick="toggleSolved(${i})">${ok?'✓ Corretto':'Segna corretto'}</button>
+        </div></div></div>`;
+  }).join('');
+}
+function toggleReveal(i){cur.revealed[i]=!cur.revealed[i];playSound('tick');renderErrors()}
+function revealAll(){cur.revealed=[true,true,true];playSound('tick');renderErrors()}
+function toggleSolved(i){
+  const a=game.solved[cur.id]||(game.solved[cur.id]=[false,false,false]);
+  a[i]=!a[i];saveGame();playSound(a[i]?'correct':'tick');renderErrors();
+}
+function closeCard(){stopTimer();$('cardModal').classList.remove('open');cur=null;broadcast()}
+function updateDoneUI(){$('doneBtn').textContent=game.completed[cur.id]?'↩ Riattiva tessera':'✓ Completa e chiudi'}
+function toggleCompleted(){
+  const id=cur.id;
+  if(game.completed[id]){delete game.completed[id];commit();updateDoneUI();return}
+  game.completed[id]=true;commit();closeCard();
+  const all=allCards().every(c=>game.completed[c.id]);
+  if(all&&!game.ended&&confirm('Tutte le tessere sono completate! Vuoi vedere la classifica finale?'))showFinal();
+}
+
+/* --- Buzzer & Timer --- */
+function triggerBuzz(){playSound('buzz');stopTimer();cur.buzzed=true;$('buzzStatus').classList.remove('hidden');$('buzzRelease').classList.remove('hidden');broadcast()}
+function releaseBuzz(){cur.buzzed=false;$('buzzStatus').classList.add('hidden');$('buzzRelease').classList.add('hidden');broadcast()}
+function toggleTimer(){timerInt?stopTimer():startTimer()}
+function startTimer(){
+  stopTimer();if(timerLeft<=0)timerLeft=cur.timerStart;
+  $('timerBtn').textContent='⏸';
+  timerInt=setInterval(()=>{
+    timerLeft--;updateTimerUI();playSound('tick');
+    if(timerLeft<=0){stopTimer();playSound('wrong');revealAll();toast('⏰ Tempo scaduto! Errori rivelati.')}
+  },1000);
+}
+function stopTimer(){if(timerInt){clearInterval(timerInt);timerInt=null}const b=$('timerBtn');if(b)b.textContent='▶'}
+function resetTimer(){stopTimer();timerLeft=cur?cur.timerStart:10;updateTimerUI()}
+function updateTimerUI(){const d=$('timerDisplay');d.textContent=Math.max(timerLeft,0)+'s';d.style.color=timerLeft<=3?'#ef4444':'#fbbf24'}
+
+/* --- Punteggi --- */
+function toggleMult(){cur.mult=!cur.mult;updateMultUI()}
+function updateMultUI(){$('multTxt').textContent=cur.mult?'ATTIVO':'off';$('multBtn').className='btn '+(cur.mult?'btn-amber':'')}
+function useJoker(type){const j=game.jokers[cur.id];if(j&&j.type===type)j.used=true}
+function applyPts(pid,pts,fraction){
+  const p=game.players.find(x=>x.id===pid);if(!p)return alert('Aggiungi prima un giocatore!');
+  if(cur.mult){pts*=2;cur.mult=false;useJoker('double');updateMultUI();toast('🎲 ×2 applicato!')}
+  p.score+=pts;
+  if(fraction>0)p.found+=Math.round(fraction*3);else if(fraction<0)p.wrong+=1;
+  if(pts>0&&cur.steal){
+    const leader=game.players.filter(x=>x.id!==pid).sort((a,b)=>b.score-a.score)[0];
+    if(leader&&leader.score>0){const take=Math.min(leader.score,pts);leader.score-=take;toast(`🦹 ${take} pt rubati a ${leader.name}`)}
+    cur.steal=false;useJoker('steal');
+  }
+  if(pts>0)game.activeId=pid;
+  playSound(pts>=0?'correct':'wrong');commit();
+}
+function award(fraction){const pid=parseInt($('assignSel').value,10);applyPts(pid,Math.round(cur.card.points*fraction),fraction)}
+function awardManual(){const v=parseInt($('manualPts').value,10);if(isNaN(v))return;applyPts(parseInt($('assignSel').value,10),v,0);$('manualPts').value=''}
+
+/* --- Reset --- */
+function resetGame(){
+  if(!confirm('Iniziare una NUOVA PARTITA?\nPunteggi, tessere completate e spunte verranno azzerati. Squadre e mazzo restano.'))return;
+  game.players.forEach(p=>{p.score=0;p.found=0;p.wrong=0});
+  game.completed={};game.solved={};game.jokers={};game.ended=false;
+  $('cardModal').classList.remove('open');$('finalModal').classList.remove('open');cur=null;stopTimer();commit();
+}
+
+/* ============================================================
+   SPAREGGIO – SUDDEN DEATH ARENA
+   ============================================================ */
+let sd={active:false,phase:'setup',qs:[],i:0,ids:[],pts:{},locked:[],buzz:null};
+function openSudden(){sd={active:true,phase:'setup',qs:[],i:0,ids:[],pts:{},locked:[],buzz:null};renderSudden();$('sdModal').classList.add('open');broadcast()}
+function closeSudden(){sd.active=false;$('sdModal').classList.remove('open');broadcast()}
+function sdStart(){
+  const ids=game.players.filter(p=>$('sdChk'+p.id)&&$('sdChk'+p.id).checked).map(p=>p.id);
+  if(ids.length<2)return alert('Seleziona almeno 2 partecipanti.');
+  if(!deck.sudden.length)return alert('Nessuna domanda: aggiungile dall\'Editor → Spareggio.');
+  sd.ids=ids;sd.qs=shuffle(deck.sudden).slice(0,5);sd.i=0;sd.pts={};ids.forEach(i=>sd.pts[i]=0);sd.locked=[];sd.buzz=null;sd.phase='ask';initAudio();renderSudden();
+}
+function sdBuzz(pid){if(sd.phase!=='ask'||sd.buzz!==null||sd.locked.includes(pid))return;sd.buzz=pid;playSound('buzz');renderSudden()}
+function sdMark(ok){
+  if(sd.buzz===null)return;
+  if(ok){sd.pts[sd.buzz]++;playSound('correct');sdNext()}
+  else{sd.locked.push(sd.buzz);sd.buzz=null;playSound('wrong');if(sd.locked.length>=sd.ids.length)sdNext();else renderSudden()}
+}
+function sdNext(){sd.i++;sd.locked=[];sd.buzz=null;if(sd.i>=sd.qs.length)sd.phase='end';renderSudden()}
+function sdAward(pid){const bonus=parseInt($('sdBonus').value,10)||0;adjust(pid,bonus);toast(`+${bonus} pt assegnati`);playSound('win')}
+const pName=id=>(game.players.find(p=>p.id===id)||{name:'?'}).name;
+function renderSudden(){
+  const b=$('sdBody');
+  if(sd.phase==='setup'){
+    const top=Math.max(...game.players.map(p=>p.score));
+    const tied=game.players.filter(p=>p.score===top);
+    const def=tied.length>=2?tied.map(p=>p.id):game.players.map(p=>p.id);
+    b.innerHTML=`<p class="text-sm text-slate-300">Scegli i partecipanti (di default i pari merito in testa). 5 domande lampo: il primo a prenotarsi risponde; se sbaglia è fuori per quella domanda.</p>
+      <div class="space-y-2">${game.players.map(p=>`<label class="flex items-center gap-2 text-sm"><input type="checkbox" id="sdChk${p.id}" ${def.includes(p.id)?'checked':''}> ${esc(p.name)} <span class="text-slate-500">(${p.score} pt)</span></label>`).join('')}</div>
+      <button class="btn btn-amber" onclick="sdStart()">⚔️ Avvia spareggio</button>`;
+  }else if(sd.phase==='ask'){
+    const q=sd.qs[sd.i];
+    b.innerHTML=`<div class="flex justify-between text-xs text-slate-400"><span>Domanda ${sd.i+1}/${sd.qs.length}</span><span>${sd.ids.map(i=>`${esc(pName(i))}: <b class="text-amber-300">${sd.pts[i]}</b>`).join(' · ')}</span></div>
+      <div class="p-5 rounded-2xl bg-slate-900/90 border border-purple-900/40 text-xl font-semibold">${esc(q.q)}</div>
+      ${sd.buzz===null?`<div class="grid grid-cols-2 sm:grid-cols-3 gap-3">${sd.ids.map((id,n)=>`<button class="px-4 py-5 rounded-xl font-heading font-black text-lg ${sd.locked.includes(id)?'bg-slate-800 text-slate-600 line-through':'bg-amber-400 text-slate-950 hover:bg-amber-300'}" ${sd.locked.includes(id)?'disabled':''} onclick="sdBuzz(${id})">${n+1}. ${esc(pName(id))}</button>`).join('')}</div><p class="text-[11px] text-slate-500">Scorciatoia: tasti 1–9 della tastiera.</p>`
+      :`<div class="p-4 rounded-xl bg-amber-950/40 border border-amber-600/40"><div class="text-amber-300 font-bold">🚨 ${esc(pName(sd.buzz))} ha prenotato!</div><div class="text-sm mt-1">Risposta corretta: <b class="text-emerald-300">${esc(q.a)}</b></div><div class="flex gap-2 mt-3"><button class="btn btn-green" onclick="sdMark(true)">✓ Giusta (+1)</button><button class="btn btn-red" onclick="sdMark(false)">✗ Sbagliata</button></div></div>`}
+      <button class="btn" onclick="sdNext()">⏭ Nessuno sa / Salta</button>`;
+  }else{
+    const mx=Math.max(...sd.ids.map(i=>sd.pts[i])),win=sd.ids.filter(i=>sd.pts[i]===mx);
+    b.innerHTML=`<h4 class="font-heading font-black text-2xl text-amber-400 text-center">${win.length===1?'🏆 Vince '+esc(pName(win[0])):'🤝 Pareggio!'}</h4>
+      <div class="space-y-1 text-sm">${sd.ids.map(i=>`<div class="flex justify-between p-2 rounded-lg bg-slate-900/70"><span>${esc(pName(i))}</span><b>${sd.pts[i]}</b></div>`).join('')}</div>
+      <div class="flex items-center gap-2"><label class="text-xs text-slate-400">Bonus punti:</label><input id="sdBonus" type="number" class="inp !w-28" value="200"></div>
+      <div class="flex flex-wrap gap-2">${win.map(i=>`<button class="btn btn-green" onclick="sdAward(${i})">Assegna bonus a ${esc(pName(i))}</button>`).join('')}<button class="btn" onclick="openSudden()">↻ Nuovo spareggio</button></div>`;
+  }
+}
+document.addEventListener('keydown',e=>{
+  if(!sd.active||sd.phase!=='ask'||sd.buzz!==null)return;
+  if(['INPUT','TEXTAREA','SELECT'].includes(e.target.tagName))return;
+  const n=parseInt(e.key,10);if(n>=1&&n<=sd.ids.length)sdBuzz(sd.ids[n-1]);
+});
+
+/* ============================================================
+   SCHERMATA FINALE & STATISTICHE
+   ============================================================ */
+function podiumHtml(list){
+  const s=list.slice().sort((a,b)=>b.score-a.score),order=[1,0,2],h=['h-28','h-40','h-20'],m=['🥈','🥇','🥉'];
+  return `<div class="flex items-end justify-center gap-3">`+order.map((idx,c)=>{
+    const p=s[idx];if(!p)return '<div class="w-28"></div>';
+    return `<div class="text-center w-28 sm:w-36"><div class="font-bold truncate">${esc(p.name)}</div><div class="text-amber-300 font-black">${p.score} pt</div><div class="${h[c]} rounded-t-xl bg-gradient-to-t from-purple-700 to-amber-400/80 flex items-start justify-center text-3xl pt-2 mt-1">${m[c]}</div></div>`;
+  }).join('')+`</div>`;
+}
+let confettiTimer=null;
+function fireConfetti(){
+  if(!window.confetti)return;clearInterval(confettiTimer);const end=Date.now()+3500;
+  confettiTimer=setInterval(()=>{
+    if(Date.now()>end)return clearInterval(confettiTimer);
+    confetti({particleCount:6,angle:60,spread:60,origin:{x:0,y:.8}});
+    confetti({particleCount:6,angle:120,spread:60,origin:{x:1,y:.8}});
+    confetti({particleCount:4,spread:100,origin:{x:.5,y:.3}});
+  },120);
+}
+function showFinal(){
+  game.ended=true;saveGame();broadcast();
+  const ps=game.players.slice().sort((a,b)=>b.score-a.score);
+  const totalCards=allCards().length,done=allCards().filter(c=>game.completed[c.id]).length;
+  const found=ps.reduce((a,p)=>a+p.found,0),wrong=ps.reduce((a,p)=>a+p.wrong,0);
+  const mvp=ps.slice().sort((a,b)=>b.found-a.found)[0];
+  $('finalBody').innerHTML=podiumHtml(ps.map(p=>({name:p.name,score:p.score})))+
+    `<div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center">
+      ${[['Tessere giocate',done+'/'+totalCards],['Errori trovati',found],['Penalità',wrong],['Joker usciti',Object.keys(game.jokers).length]].map(([l,v])=>`<div class="p-3 rounded-xl bg-slate-900/70 border border-slate-800"><div class="text-2xl font-heading font-black text-amber-400">${v}</div><div class="text-[11px] text-slate-400 uppercase">${l}</div></div>`).join('')}
+    </div>
+    ${mvp&&mvp.found>0?`<p class="text-center text-sm">🎯 Cacciatore di errori: <b class="text-amber-300">${esc(mvp.name)}</b> (${mvp.found} errori trovati)</p>`:''}
+    <table class="w-full text-sm"><thead class="text-slate-400 text-xs uppercase"><tr><th class="text-left p-2">Squadra</th><th>Punti</th><th>Errori</th><th>Penalità</th></tr></thead><tbody>
+      ${ps.map(p=>`<tr class="border-t border-slate-800 text-center"><td class="text-left p-2 font-bold">${esc(p.name)}</td><td>${p.score}</td><td>${p.found}</td><td>${p.wrong}</td></tr>`).join('')}
+    </tbody></table>
+    <div class="flex justify-center gap-2"><button class="btn btn-red" onclick="resetGame()">🔄 Nuova partita</button></div>`;
+  $('finalModal').classList.add('open');playSound('win');fireConfetti();
+}
+function closeFinal(){game.ended=false;saveGame();$('finalModal').classList.remove('open');broadcast()}
+
+/* ============================================================
+   EDITOR (categorie, tessere, import/export, spareggio)
+   ============================================================ */
+let edTab='cats',edCat=null,edCardId=null;
+function openEditor(tab){edTab=tab||edTab;if(!edCat)edCat=deck.categories[0]?.id||'__show';renderEditor();$('editorModal').classList.add('open')}
+function renderEditor(){
+  const tabs=[['cats','📂 Categorie'],['cards','🃏 Tessere'],['json','💾 Import/Export'],['sd','⚔️ Spareggio']];
+  $('edTabs').innerHTML=tabs.map(([k,l])=>`<button class="btn ${edTab===k?'btn-amber':''}" onclick="edTab='${k}';renderEditor()">${l}</button>`).join('');
+  $('edBody').innerHTML=edTab==='cats'?edCatsHtml():edTab==='cards'?edCardsHtml():edTab==='json'?edJsonHtml():edSdHtml();
+}
+function edAfter(){saveDeck();renderBoard();broadcast()}
+function edCatsHtml(){
+  return deck.categories.map((c,i)=>`<div class="flex gap-2 items-center">
+    <input class="inp !w-16 text-center" maxlength="4" value="${esc(c.emoji)}" onchange="edCatSet(${i},'emoji',this.value)">
+    <input class="inp" value="${esc(c.title)}" onchange="edCatSet(${i},'title',this.value)">
+    <span class="text-xs text-slate-400 whitespace-nowrap">${c.cards.length} tessere</span>
+    <button class="btn" onclick="edCatMove(${i},-1)">↑</button><button class="btn" onclick="edCatMove(${i},1)">↓</button>
+    <button class="btn btn-red" onclick="edCatDel(${i})">🗑</button></div>`).join('')+
+    `<button class="btn btn-purple" onclick="edCatAdd()">+ Aggiungi categoria</button>`;
+}
+function edCatSet(i,k,v){v=v.trim();if(v)deck.categories[i][k]=v;edAfter();renderEditor()}
+function edCatMove(i,d){const j=i+d,a=deck.categories;if(j<0||j>=a.length)return;[a[i],a[j]]=[a[j],a[i]];edAfter();renderEditor()}
+function edCatDel(i){const c=deck.categories[i];if(!confirm(`Eliminare "${c.title}" e le sue ${c.cards.length} tessere?`))return;deck.categories.splice(i,1);purgeOrphans();edCat=deck.categories[0]?.id||'__show';saveGame();edAfter();renderEditor();renderPlayers()}
+function edCatAdd(){const c={id:uid(),title:'Nuova categoria',emoji:'❓',cards:[]};deck.categories.push(c);edCat=c.id;edAfter();renderEditor()}
+function edCardsHtml(){
+  const opts=deck.categories.map(c=>`<option value="${esc(c.id)}" ${c.id===edCat?'selected':''}>${esc(c.emoji+' '+c.title)}</option>`).join('')+`<option value="__show" ${edCat==='__show'?'selected':''}>★ Showdown finale</option>`;
+  const list=edCat==='__show'?[deck.showdown]:(deck.categories.find(c=>c.id===edCat)?.cards||[]);
+  const k=edCardId?(findCard(edCardId)?.card):null;
+  const v=k||{points:(list.length+1)*100,text:'',solutions:[{err:'',corr:''},{err:'',corr:''},{err:'',corr:''}],trapType:'none',trapNote:''};
+  return `<div class="flex gap-2 items-center"><label class="text-xs text-slate-400">Categoria:</label><select class="inp !w-auto" onchange="edCat=this.value;edCardId=null;renderEditor()">${opts}</select></div>
+  <div class="space-y-1.5">${list.slice().sort((a,b)=>a.points-b.points).map(c=>`<div class="flex items-center gap-2 p-2 rounded-lg bg-slate-900/70 text-xs"><b class="text-amber-400 w-12">${c.points}</b><span class="flex-1 truncate">${esc(c.text.replace(/\*/g,''))}</span><button class="btn" data-id="${esc(c.id)}" onclick="edCardId=this.dataset.id;renderEditor()">✏️</button>${c.id!=='showdown'?`<button class="btn btn-red" data-id="${esc(c.id)}" onclick="edDelCard(this.dataset.id)">🗑</button>`:''}</div>`).join('')||'<p class="text-xs text-slate-500">Nessuna tessera.</p>'}</div>
+  <div class="p-4 rounded-2xl bg-slate-900/70 border border-slate-800 space-y-3">
+    <div class="flex justify-between"><h4 class="font-bold text-amber-400 text-sm">${edCardId?'Modifica tessera':'Nuova tessera'}</h4>${edCardId?'<button class="btn" onclick="edCardId=null;renderEditor()">+ Nuova</button>':''}</div>
+    <div class="grid grid-cols-3 gap-3"><div><label class="text-[11px] text-slate-400">Punti</label><input id="fPoints" type="number" class="inp" value="${v.points}"></div>
+      <div class="col-span-2"><label class="text-[11px] text-slate-400">Tipo di trappola</label><select id="fTrap" class="inp">${Object.entries(TRAPS).map(([k2,l])=>`<option value="${k2}" ${v.trapType===k2?'selected':''}>${l}</option>`).join('')}</select></div></div>
+    <div><label class="text-[11px] text-slate-400">Testo da leggere — metti gli ERRORI tra *asterischi* (esattamente 3)</label>
+      <textarea id="fText" rows="4" class="inp" oninput="$('fPrev').innerHTML=highlight(this.value)">${esc(v.text)}</textarea>
+      <div id="fPrev" class="mt-2 p-3 rounded-lg bg-slate-950 text-sm leading-loose">${highlight(v.text)}</div></div>
+    ${[0,1,2].map(i=>`<div class="grid grid-cols-1 sm:grid-cols-2 gap-2"><input id="fE${i}" class="inp" placeholder="Errore ${i+1} (come appare nel testo)" value="${esc(v.solutions[i]?.err||'')}"><input id="fC${i}" class="inp" placeholder="Correzione (usa **grassetto** per la risposta)" value="${esc(v.solutions[i]?.corr||'')}"></div>`).join('')}
+    <div><label class="text-[11px] text-slate-400">Note per il conduttore</label><input id="fTrapNote" class="inp" value="${esc(v.trapNote)}"></div>
+    <button class="btn btn-amber" onclick="edSaveCard()">💾 Salva tessera</button>
+  </div>`;
+}
+function edSaveCard(){
+  const g=id=>$(id).value.trim();
+  const points=parseInt(g('fPoints'),10),text=g('fText');
+  const sol=[0,1,2].map(i=>({err:g('fE'+i),corr:g('fC'+i)}));
+  if(!(points>0))return alert('Inserisci un valore in punti valido.');
+  if(!text)return alert('Inserisci il testo da leggere.');
+  if(sol.some(s=>!s.err||!s.corr))return alert('I 3 errori (etichetta + correzione) sono obbligatori.');
+  const n=(text.match(/\*(.+?)\*/g)||[]).length;
+  if(n!==3&&!confirm(`Nel testo ci sono ${n} parti tra asterischi invece di 3. Salvare comunque?`))return;
+  const base={points,text,solutions:sol,trapType:$('fTrap').value,trapNote:g('fTrapNote')};
+  if(edCat==='__show')deck.showdown={...base,id:'showdown'};
+  else{
+    const cat=deck.categories.find(c=>c.id===edCat);if(!cat)return alert('Crea prima una categoria.');
+    if(edCardId){const i=cat.cards.findIndex(c=>c.id===edCardId);if(i>=0)cat.cards[i]={...base,id:edCardId};}
+    else cat.cards.push({...base,id:uid()});
+  }
+  edCardId=null;edAfter();renderEditor();toast('Tessera salvata ✓');
+}
+function edDelCard(id){
+  if(!confirm('Eliminare questa tessera?'))return;
+  deck.categories.forEach(c=>c.cards=c.cards.filter(k=>k.id!==id));
+  purgeOrphans();saveGame();edCardId=null;edAfter();renderEditor();
+}
+function edJsonHtml(){
+  return `<p class="text-xs text-slate-400">Il JSON contiene categorie, tessere, showdown e domande di spareggio. Puoi importare anche il vecchio formato (<code>readText</code>/<code>trapNote</code>).</p>
+  <textarea id="jsonBox" rows="14" class="inp font-mono text-[11px]">${esc(JSON.stringify(deck,null,2))}</textarea>
+  <div class="flex flex-wrap gap-2"><button class="btn" onclick="dlDeck()">⬇️ Scarica .json</button><button class="btn" onclick="copyDeck()">📋 Copia</button><button class="btn btn-amber" onclick="importDeck()">⬆️ Importa dal riquadro</button><button class="btn btn-red" onclick="restoreDeck()">♻️ Ripristina mazzo di default</button></div>`;
+}
+function dlDeck(){const b=new Blob([JSON.stringify(deck,null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='erm-actually-mazzo.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),2000)}
+function copyDeck(){navigator.clipboard.writeText($('jsonBox').value).then(()=>toast('Copiato ✓'),()=>toast('Copia non riuscita'))}
+function normalizeDeck(o){
+  if(!o||!Array.isArray(o.categories))throw new Error('Manca l\'array "categories".');
+  const used=new Set(['showdown']);
+  const nc=k=>{
+    const text=k.text??k.readText;if(typeof text!=='string'||!text.trim())throw new Error('Tessera senza testo.');
+    const sol=(k.solutions||[]).slice(0,3).map(s=>({err:String(s.err||''),corr:String(s.corr||'')}));
+    if(sol.length!==3)throw new Error('Ogni tessera richiede esattamente 3 errori.');
+    let id=k.id&&String(k.id);if(!id||used.has(id))id=uid();used.add(id);
+    return{id,points:Number(k.points)||100,text,solutions:sol,trapType:TRAPS[k.trapType]?k.trapType:(k.trapNote?'bait':'none'),trapNote:String(k.trapNote||'')};
+  };
+  const cats=o.categories.map(c=>({id:String(c.id||uid()),title:String(c.title||'Categoria'),emoji:String(c.emoji||c.icon&&'❓'||'❓'),cards:(c.cards||[]).map(nc)}));
+  const sh=o.showdown||o.showdownCard;
+  const showdown=sh?{...nc(sh),id:'showdown'}:defaultDeck().showdown;
+  const sudden=Array.isArray(o.sudden)?o.sudden.filter(x=>x&&x.q).map(x=>({q:String(x.q),a:String(x.a||'')})):defaultDeck().sudden;
+  return{version:2,categories:cats,showdown,sudden};
+}
+function importDeck(){
+  try{const d=normalizeDeck(JSON.parse($('jsonBox').value));
+    if(!confirm('Sostituire il mazzo attuale con quello importato?'))return;
+    deck=d;purgeOrphans();saveGame();edCat=deck.categories[0]?.id||'__show';edCardId=null;edAfter();renderEditor();toast('Mazzo importato ✓');
+  }catch(e){alert('JSON non valido: '+e.message)}
+}
+function restoreDeck(){if(!confirm('Ripristinare il mazzo di default? Perderai le modifiche al mazzo.'))return;deck=defaultDeck();purgeOrphans();saveGame();edCat=deck.categories[0].id;edAfter();renderEditor()}
+function edSdHtml(){
+  return `<p class="text-xs text-slate-400">Una domanda per riga nel formato <code>Domanda | Risposta</code>. Ne vengono estratte 5 a caso a ogni spareggio.</p>
+  <textarea id="sdBox" rows="12" class="inp">${esc(deck.sudden.map(x=>x.q+' | '+x.a).join('\n'))}</textarea>
+  <button class="btn btn-amber" onclick="edSaveSd()">💾 Salva domande</button>`;
+}
+function edSaveSd(){
+  deck.sudden=$('sdBox').value.split('\n').map(l=>l.trim()).filter(Boolean).map(l=>{const [q,...r]=l.split('|');return{q:q.trim(),a:r.join('|').trim()}}).filter(x=>x.q);
+  saveDeck();toast('Domande salvate ✓');
+}
+
+/* ============================================================
+   SINCRONIZZAZIONE LIVE (PeerJS / WebRTC) – lato conduttore
+   ============================================================ */
+let hostPeer=null,hostId=null;const conns=new Set();
+function snapshot(){
+  const sp=settings.showScores||game.ended;
+  return{t:'state',
+    cats:deck.categories.map(c=>({id:c.id,title:c.title,emoji:c.emoji,cards:c.cards.slice().sort((a,b)=>a.points-b.points).map(k=>({id:k.id,p:k.points,d:!!game.completed[k.id]}))})),
+    show:{id:'showdown',p:deck.showdown.points,d:!!game.completed.showdown},
+    open:cur?{id:cur.id,cat:cur.catTitle,p:cur.card.points,buzz:cur.buzzed}:null,
+    players:sp?game.players.map(p=>({n:p.name,s:p.score})):null,
+    ended:!!game.ended,sd:!!sd.active};
+}
+function broadcast(){
+  if(!hostPeer)return;
+  const s=snapshot();conns.forEach(c=>{if(c.open)try{c.send(s)}catch(e){}});
+  updateSyncUI();
+}
+function setSync(st){window._sync=st;updateSyncUI()}
+function updateSyncUI(){
+  const b=$('syncBadge');if(!b)return;const n=[...conns].filter(c=>c.open).length;
+  const st=window._sync;
+  b.textContent=st==='online'?`● Live · ${n} connessi`:st==='connecting'?'● Connessione…':'● Sync offline';
+  b.style.color=st==='online'?'#34d399':st==='connecting'?'#fbbf24':'#f87171';
+  const q=$('qrCount');if(q)q.textContent=st==='online'?`📶 ${n} telefoni connessi`:'';
+}
+function initHostPeer(){
+  if(!window.Peer){setSync('offline');return}
+  setSync('connecting');
+  const id=load(PEER_KEY)||('erm-'+Math.random().toString(36).slice(2,10));
+  hostPeer=new Peer(id,PEER_OPTS);
+  hostPeer.on('open',pid=>{hostId=pid;store(PEER_KEY,pid);setSync('online');renderQR()});
+  hostPeer.on('connection',conn=>{
+    conns.add(conn);
+    conn.on('open',()=>{conn.send(snapshot());updateSyncUI()});
+    conn.on('close',()=>{conns.delete(conn);updateSyncUI()});
+    conn.on('error',()=>{conns.delete(conn);updateSyncUI()});
+  });
+  hostPeer.on('disconnected',()=>{setSync('connecting');try{hostPeer.reconnect()}catch{}});
+  hostPeer.on('error',err=>{
+    console.warn('Peer error',err.type);
+    if(err.type==='unavailable-id'){localStorage.removeItem(PEER_KEY);try{hostPeer.destroy()}catch{}hostPeer=null;setTimeout(initHostPeer,300)}
+    else if(['network','server-error','socket-error','socket-closed'].includes(err.type)){setSync('offline');setTimeout(()=>{if(hostPeer&&hostPeer.disconnected)try{hostPeer.reconnect()}catch{}},4000)}
+  });
+}
+/* --- QR --- */
+const isLocalHost=h=>h==='localhost'||/^127\./.test(h)||/^192\.168\./.test(h)||/^10\./.test(h)||/^172\.(1[6-9]|2\d|3[01])\./.test(h)||h.endsWith('.local')||h==='';
+function baseUrl(){
+  if(settings.publicUrl){try{const u=new URL(settings.publicUrl);u.search='';u.hash='';return u.toString()}catch{}}
+  if(/^https?:$/.test(location.protocol)&&!isLocalHost(location.hostname))return location.origin+location.pathname;
+  return '';
+}
+const audUrl=()=>{const b=baseUrl();return b&&hostId?b+'?v='+encodeURIComponent(hostId):''};
+function renderQR(){
+  const box=$('qrBox'),url=audUrl(),warn=$('qrWarn');
+  box.innerHTML='';$('qrUrl').textContent=url;$('pubUrl').value=settings.publicUrl||'';
+  const local=!baseUrl();
+  warn.classList.toggle('hidden',!local&&!/^(localhost|127\.|192\.168\.)/.test(location.hostname));
+  if(local){warn.textContent='⚠️ Questo file non è raggiungibile da Internet. Caricalo su GitHub Pages / Netlify Drop e incolla qui sotto l\'URL pubblico: altrimenti i telefoni in 5G non potranno aprirlo.';box.textContent=hostId?'Imposta l\'URL pubblico ↓':'Connessione in corso…';return}
+  if(!hostId){box.textContent='Connessione in corso…';return}
+  if(window.QRCode)new QRCode(box,{text:url,width:240,height:240,colorDark:'#0f0c1b',colorLight:'#ffffff',correctLevel:QRCode.CorrectLevel.M});
+  else box.textContent='Libreria QR non caricata';
+}
+function openQR(){renderQR();updateSyncUI();$('qrModal').classList.add('open')}
+function savePubUrl(){
+  const v=$('pubUrl').value.trim();
+  if(v){try{new URL(v)}catch{return alert('URL non valido (deve iniziare con https://).')}}
+  settings.publicUrl=v;store(SET_KEY,settings);renderQR();
+}
+function copyAudUrl(){const u=audUrl();if(!u)return toast('Imposta prima l\'URL pubblico');navigator.clipboard.writeText(u).then(()=>toast('Link copiato ✓'))}
+
+/* ============================================================
+   VISTA PUBBLICO (smartphone dei concorrenti)
+   ============================================================ */
+let audConfettiDone=false;
+function audStatus(st){
+  const b=$('audStatus');
+  b.textContent=st==='online'?'● Live':st==='connecting'?'● Connessione…':'● Riconnessione…';
+  b.style.color=st==='online'?'#34d399':st==='connecting'?'#fbbf24':'#f87171';
+}
+function audRender(s){
+  const main=$('audMain'),ban=$('audBanner');
+  if(s.ended){
+    ban.innerHTML='';
+    main.innerHTML=`<div class="text-center space-y-6 mt-6"><h2 class="font-heading text-3xl font-black text-amber-400">🏆 Classifica finale</h2>${podiumHtml((s.players||[]).map(p=>({name:p.n,score:p.s})))}</div>`;
+    if(!audConfettiDone){audConfettiDone=true;fireConfetti()}return;
+  }
+  audConfettiDone=false;
+  let b='';
+  if(s.sd)b+=`<div class="p-3 rounded-xl bg-red-950/60 border border-red-700 text-center font-heading font-black text-red-300 mb-2">⚔️ SPAREGGIO IN CORSO!</div>`;
+  if(s.open)b+=`<div class="p-3 rounded-xl ${s.open.buzz?'bg-amber-400 text-slate-950':'bg-purple-950/60 border border-purple-700 text-purple-200'} text-center font-heading font-black mb-2">${s.open.buzz?'🚨 ERM, ACTUALLY!':`Tessera in gioco: ${esc(s.open.cat)} · ${s.open.p}`}</div>`;
+  ban.innerHTML=b;
+  const cols=Math.max(s.cats.length,1);
+  let h=`<div class="grid gap-3 min-w-[${cols*80}px]" style="grid-template-columns:repeat(${cols},minmax(78px,1fr))">`+
+    s.cats.map(c=>`<div class="space-y-3"><div class="glass p-2 rounded-xl text-center"><div class="text-xl">${esc(c.emoji)}</div><div class="font-heading font-bold text-[10px] uppercase tracking-wide">${esc(c.title)}</div></div>`+
+      c.cards.map(k=>`<div class="aud-tile ${k.d?'tile-gone':''} ${s.open&&s.open.id===k.id?'tile-open':''}">${k.p}</div>`).join('')+`</div>`).join('')+`</div>`;
+  h+=`<div class="mt-5"><div class="aud-tile ${s.show.d?'tile-gone':''} ${s.open&&s.open.id==='showdown'?'tile-open':''} !border-amber-500/60">🔥 SHOWDOWN ${s.show.p}</div></div>`;
+  if(s.players){
+    h+=`<div class="glass rounded-2xl p-4 mt-6 space-y-2"><h3 class="font-heading font-bold text-amber-400">Classifica</h3>`+
+      s.players.slice().sort((a,b)=>b.s-a.s).map((p,i)=>`<div class="flex justify-between text-sm"><span>${i===0?'👑 ':''}${esc(p.n)}</span><b class="text-amber-300">${p.s}</b></div>`).join('')+`</div>`;
+  }
+  main.innerHTML=h;
+}
+function startAudience(hostId){
+  let peer=null,conn=null,timer=null;
+  const retry=()=>{clearTimeout(timer);timer=setTimeout(connect,3000)};
+  function makePeer(){
+    peer=new Peer(undefined,PEER_OPTS);
+    peer.on('open',connect);
+    peer.on('disconnected',()=>{try{peer.reconnect()}catch{}});
+    peer.on('error',e=>{
+      audStatus('offline');
+      if(e.type==='peer-unavailable')return retry();
+      if(peer.destroyed){peer=null;setTimeout(makePeer,3000)}else retry();
+    });
+  }
+  function connect(){
+    if(!peer||!peer.open)return;
+    audStatus('connecting');
+    if(conn)try{conn.close()}catch{}
+    conn=peer.connect(hostId,{reliable:true});
+    conn.on('open',()=>audStatus('online'));
+    conn.on('data',d=>{if(d&&d.t==='state')audRender(d)});
+    conn.on('close',()=>{audStatus('offline');retry()});
+    conn.on('error',()=>{audStatus('offline');retry()});
+  }
+  document.addEventListener('visibilitychange',()=>{if(!document.hidden&&(!conn||!conn.open))connect()});
+  audStatus('connecting');makePeer();
+}
+
+/* ============================================================
+   AVVIO
+   ============================================================ */
+const viewId=new URLSearchParams(location.search).get('v');
+if(viewId){
+  $('hostApp').classList.add('hidden');$('audApp').classList.remove('hidden');
+  if(window.Peer)startAudience(viewId);else $('audMain').innerHTML='<p class="text-center text-red-400 mt-10">Impossibile caricare PeerJS (controlla la connessione).</p>';
+}else{
+  window.addEventListener('load',()=>{renderBoard();renderPlayers();initHostPeer()});
+  renderBoard();renderPlayers();
+}
+</script>
+</body>
+</html>
