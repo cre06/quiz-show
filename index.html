@@ -391,8 +391,6 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:#0c0a14;color:#f3f4f6
    1. COSTANTI & UTILITY
    ===================================================================== */
 const DECK_KEY='erm_deck_v3', GAME_KEY='erm_game_v3', SET_KEY='erm_settings_v3', PEER_KEY='erm_peer_id_v3';
-// Per reti mobili molto restrittive (CGNAT / NAT simmetrico) aggiungi qui un server TURN, ad esempio:
-// {urls:'turn:tuo.server.it:3478',username:'utente',credential:'password'}
 const PEER_OPTS={config:{iceServers:[{urls:'stun:stun.l.google.com:19302'},{urls:'stun:stun1.l.google.com:19302'}]}};
 const TRAPS={none:'Nessuna trappola',bait:'Esca: affermazione VERA che sembra falsa',debate:'Dibattito / zona grigia',nitpick:'Pignoleria accettabile'};
 const JOKERS={
@@ -405,7 +403,6 @@ const $=id=>document.getElementById(id);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const uid=()=>'x'+Math.random().toString(36).slice(2,9);
 const fmtBold=s=>esc(s).replace(/\*\*(.+?)\*\*/g,'<strong class="text-amber-300">$1</strong>');
-// EVIDENZIATORE: escape HTML, poi *parola* -> <span class="wrong-highlight">parola</span>
 const highlight=s=>{let n=0;return esc(s).replace(/\*(.+?)\*/g,(m,a)=>`<span class="wrong-highlight" data-i="${n++}">${a}</span>`)};
 const load=k=>{try{return JSON.parse(localStorage.getItem(k))}catch{return null}};
 const store=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch(e){console.warn('localStorage',e)}};
@@ -440,10 +437,10 @@ function playSound(t,p){
 function toggleSound(){settings.sound=!settings.sound;store(SET_KEY,settings);$('soundBtn').textContent=settings.sound?'🔊':'🔇'}
 
 /* =====================================================================
-   3. STATO (il mazzo NON è incorporato: arriva solo da localStorage)
+   3. STATO
    ===================================================================== */
 const newGame=()=>({players:[{id:1,name:'Squadra Alfa',score:0,found:0,wrong:0},{id:2,name:'Squadra Beta',score:0,found:0,wrong:0}],activeId:1,completed:{},solved:{},jokers:{},ended:false});
-let deck=load(DECK_KEY);                       // null => schermata di benvenuto
+let deck=load(DECK_KEY);
 let game=load(GAME_KEY)||newGame();
 let settings=Object.assign({sound:true,showScores:false,jokersOn:true,publicUrl:''},load(SET_KEY)||{});
 game.players.forEach(p=>{p.found=p.found||0;p.wrong=p.wrong||0});
@@ -470,7 +467,7 @@ function renderAll(){
 const needDeck=()=>{if(!deck){toast('Prima importa o crea un mazzo');return false}return true};
 
 /* =====================================================================
-   4. RENDER CONDUTTORE: TABELLONE & SQUADRE
+   4. RENDER CONDUTTORE
    ===================================================================== */
 function renderBoard(){
   if(!deck)return;
@@ -494,7 +491,6 @@ function fillSelect(){
   sel.value=game.players.some(p=>String(p.id)===prev)?prev:String(game.activeId);
 }
 function renderPlayers(){
-  // FLIP: riordino fluido della classifica
   const old={};document.querySelectorAll('[data-row]').forEach(e=>old[e.dataset.row]=e.getBoundingClientRect().top);
   const list=game.players.slice().sort((a,b)=>b.score-a.score);
   const top=Math.max(...game.players.map(p=>p.score),1);
@@ -520,7 +516,6 @@ function renderPlayers(){
   const a=game.players.find(p=>p.id===game.activeId);$('activeName').textContent=a?a.name:'—';
   fillSelect();tweenScores();
 }
-// Conteggio animato dei punteggi
 function tweenScores(){
   if(tweenRAF)return;
   const step=()=>{let busy=false;
@@ -553,7 +548,7 @@ function adjust(id,amt){const p=game.players.find(x=>x.id===id);if(!p)return;p.s
 /* =====================================================================
    5. MODALE TESSERA
    ===================================================================== */
-function wrapWords(root){ // rivelazione parola per parola
+function wrapWords(root){
   const tw=document.createTreeWalker(root,NodeFilter.SHOW_TEXT),nodes=[];while(tw.nextNode())nodes.push(tw.currentNode);
   const total=nodes.reduce((a,n)=>a+(n.nodeValue.match(/\S+/g)||[]).length,0),step=Math.min(45,1400/Math.max(total,1));let i=0;
   nodes.forEach(n=>{const f=document.createDocumentFragment();
@@ -768,7 +763,7 @@ function showFinal(){
 function closeFinal(){game.ended=false;saveGame();closeM('finalModal');broadcast()}
 
 /* =====================================================================
-   9. EDITOR (categorie, tessere, import/export, spareggio)
+   9. EDITOR
    ===================================================================== */
 let edTab='cats',edCat=null,edCardId=null;
 function openEditor(tab){
@@ -882,12 +877,11 @@ function edSdHtml(){
 function edSaveSd(){deck.sudden=$('sdBox').value.split('\n').map(l=>l.trim()).filter(Boolean).map(l=>{const [q,...r]=l.split('|');return{q:q.trim(),a:r.join('|').trim()}}).filter(x=>x.q);saveDeck();toast('Domande salvate ✓')}
 
 /* =====================================================================
-   10. SINCRONIZZAZIONE LIVE (PeerJS / WebRTC) – lato conduttore
-   Ai concorrenti vengono inviati SOLO titoli, valori e stato: mai testi o soluzioni.
+   10. SINCRONIZZAZIONE LIVE (PeerJS / WebRTC)
    ===================================================================== */
 let hostPeer=null, hostId=null, hbN=0; 
 const conns=new Set();
-let heartbeatInterval = null; // Variabile per gestire il timer dell'heartbeat
+let heartbeatInterval = null;
 
 function snapshot(){
   const sp=settings.showScores||game.ended;
@@ -922,27 +916,20 @@ function updateSyncUI(){
 }
 
 function initHostPeer(){
-  // Pulisce eventuali timer precedenti per evitare duplicati
   if(heartbeatInterval) clearInterval(heartbeatInterval);
-  
   if(!window.Peer){setSync('offline');return}
   setSync('connecting');
   
   console.log("Inizializzazione PeerJS...");
-  
-  // IMPORTANTE: Passiamo 'undefined' come ID per lasciarlo generare al server
-  // Questo evita l'errore "unavailable-id" causato dal riutilizzo di ID vecchi
   hostPeer=new Peer(undefined, PEER_OPTS);
 
   hostPeer.on('open', pid => {
     hostId = pid;
-    // Salviamo il nuovo ID solo per questa sessione
     store(PEER_KEY, pid); 
     console.log("Peer aperto con ID:", pid);
     setSync('online');
     renderQR();
     
-    // Avvia l'heartbeat solo se il peer è aperto
     heartbeatInterval = setInterval(() => {
       conns.forEach(c => {
         if(c.open) try{c.send({t:'hb'})} catch{}
@@ -954,17 +941,20 @@ function initHostPeer(){
   hostPeer.on('connection', conn => {
     console.log("Nuova connessione ricevuta da:", conn.peer);
     conns.add(conn);
+    
     conn.on('open', () => {
       try{conn.send(snapshot())} catch{}
       updateSyncUI();
     });
-        // Aggiungi questo ascoltatore per i dati in arrivo dai client
+
+    // AGGIUNTA FONDAMENTALE PER RICEVERE LA RICHIESTA DEI DATI
     conn.on('data', (data) => {
       if (data && data.t === 'hello') {
         console.log("Host: Client ha chiesto i dati, invio snapshot...");
         try { conn.send(snapshot()); } catch(e){}
       }
     });
+
     conn.on('close', () => {
       conns.delete(conn);
       updateSyncUI();
@@ -993,8 +983,6 @@ function initHostPeer(){
       setSync('connecting');
       
       try { oldPeer.destroy(); } catch (e) {}
-      
-      // Ritenta dopo 1 secondo
       setTimeout(initHostPeer, 1000);
       return;
     }
@@ -1093,7 +1081,7 @@ async function getWakeLock(){
     setBanner('🔒 Schermo mantenuto acceso.');
     wl.addEventListener('release',()=>{wl=null})
   } catch(e){
-    setBanner('⚠️ Impossibile bloccare lo spegnimento dello schermo: tienilo acceso manualmente.')
+    setBanner('⚠️ Impossibile bloccare lo spegnimento dello schermo: tienilo acceso manuale.')
   }
 }
 document.addEventListener('visibilitychange',()=>{
@@ -1112,25 +1100,20 @@ document.addEventListener('click',()=>{
    11. VISTA CONCORRENTI (smartphone)
    ===================================================================== */
 const aud={key:null,cols:{},tiles:{},timers:{},banner:'',last:0,confetti:false};
-
 function audStatus(st){
   const b=$('audStatus');
   if(!b) return;
   b.textContent=st==='online'?'● Live':st==='connecting'?'● Connessione…':'● Riconnessione…';
   b.style.color=st==='online'?'#34d399':st==='connecting'?'#fbbf24':'#f87171';
 }
-
 function setColGone(id,gone){
   const col=aud.cols[id];if(!col)return;clearTimeout(aud.timers[id]);
   if(gone){col.classList.add('col-gone');aud.timers[id]=setTimeout(()=>{col.style.display='none'},750)}
   else{col.style.display='';void col.offsetWidth;col.classList.remove('col-gone')}
 }
-
 function audRender(s){
-  if(!s || !s.cats) return; // Sicurezza: se non ci sono dati, non fare nulla
-  
+  if(!s || !s.cats) return;
   $('audWait').classList.add('hidden');
-  
   if(s.ended){
     ['audBoard','audShow','audDone','audScores'].forEach(i=>$(i).classList.add('hidden'));
     $('audBanner').innerHTML='';aud.banner='';aud.key=null;
@@ -1138,11 +1121,8 @@ function audRender(s){
     f.innerHTML=`<h2 class="font-heading text-3xl font-black text-amber-400">🏆 Classifica finale</h2>${podiumHtml((s.players||[]).map(p=>({name:p.n,score:p.s})))}`;
     if(!aud.confetti){aud.confetti=true;fireConfetti()}return;
   }
-  
   aud.confetti=false;$('audFinal').classList.add('hidden');
   const board=$('audBoard');
-  
-  // (Ri)costruzione struttura solo se cambiano categorie/tessere
   const key=s.cats.map(c=>c.id+':'+c.cards.map(k=>k.id).join(',')).join('|');
   if(key!==aud.key){
     aud.key=key;aud.cols={};aud.tiles={};board.classList.add('no-anim');
@@ -1151,26 +1131,20 @@ function audRender(s){
     board.querySelectorAll('.aud-tile').forEach(e=>aud.tiles[e.dataset.id]=e);
     requestAnimationFrame(()=>requestAnimationFrame(()=>board.classList.remove('no-anim')));
   }
-  
   let anyCat=false;
   s.cats.forEach(c=>{
     const all=c.cards.every(k=>k.d);if(!all)anyCat=true;setColGone(c.id,all);
     c.cards.forEach(k=>{const t=aud.tiles[k.id];if(!t)return;t.classList.toggle('tile-gone',k.d);t.classList.toggle('tile-open',!!(s.open&&s.open.id===k.id))});
   });
-  
   board.classList.toggle('hidden',!s.cats.length);
   const sh=$('audShow');
   if(s.show){sh.classList.remove('hidden');sh.textContent='🔥 SHOWDOWN '+s.show.p;sh.classList.toggle('show-gone',s.show.d);sh.classList.toggle('tile-open',!!(s.open&&s.open.id==='showdown'))}
   else sh.classList.add('hidden');
-  
   $('audDone').classList.toggle('hidden',!(!anyCat&&(!s.show||s.show.d)));
-  
-  // Banner
   let b='';
   if(s.sd)b+=`<div class="p-3 rounded-xl bg-red-950/60 border border-red-700 text-center font-heading font-black text-red-300 mb-2 banner-in">⚔️ SPAREGGIO IN CORSO!</div>`;
   if(s.open)b+=s.open.buzz?`<div class="p-3 rounded-xl bg-amber-400 text-slate-950 text-center font-heading font-black text-xl mb-2 banner-in">🚨 ERM, ACTUALLY!</div>`:`<div class="p-3 rounded-xl bg-purple-950/60 border border-purple-700 text-purple-200 text-center font-heading font-bold mb-2 banner-in">Tessera in gioco: ${esc(s.open.cat)} · ${s.open.p}</div>`;
   if(b!==aud.banner){aud.banner=b;$('audBanner').innerHTML=b}
-  
   const sc=$('audScores');
   if(s.players){sc.classList.remove('hidden');sc.innerHTML=`<div class="glass rounded-2xl p-4 space-y-2"><h3 class="font-heading font-bold text-amber-400">Classifica</h3>`+s.players.slice().sort((a,b)=>b.s-a.s).map((p,i)=>`<div class="flex justify-between text-sm"><span>${i===0&&p.s>0?'👑 ':''}${esc(p.n)}</span><b class="text-amber-300">${p.s}</b></div>`).join('')+`</div>`}
   else{sc.classList.add('hidden');sc.innerHTML=''}
@@ -1178,20 +1152,15 @@ function audRender(s){
 
 function startAudience(hostId){
   let peer=null,conn=null,timer=null;
-  
   const retry=()=>{clearTimeout(timer);timer=setTimeout(connect,3000)};
-  
   function makePeer(){
     console.log("Client: Creazione Peer...");
     peer=new Peer(undefined,PEER_OPTS);
-    
     peer.on('open', () => {
       console.log("Client: Peer aperto, ID:", peer.id);
       connect();
     });
-    
     peer.on('disconnected',()=>{try{peer.reconnect()}catch{}});
-    
     peer.on('error',e=>{
       console.warn("Client Peer Error:", e.type);
       audStatus('offline');
@@ -1199,23 +1168,18 @@ function startAudience(hostId){
       if(peer.destroyed){peer=null;setTimeout(makePeer,3000)}else retry();
     });
   }
-  
   function connect(){
     if(!peer||!peer.open)return;
     audStatus('connecting');
     if(conn)try{conn.close()}catch{}
-    
     console.log("Client: Tentativo di connessione a host:", hostId);
     conn=peer.connect(hostId,{reliable:true});
-    
     conn.on('open',()=>{
-      console.log("Client: Connessione APERTA!");
+      console.log("Client: CONNESSIONE APERTA! Richiesta dati...");
       audStatus('online');
       aud.last=Date.now();
-      // Invia un segnale all'host per farsi mandare i dati subito
       conn.send({t:'hello'}); 
     });
-    
     conn.on('data',d=>{
       aud.last=Date.now();
       if(d && d.t==='state'){
@@ -1223,30 +1187,24 @@ function startAudience(hostId){
         audRender(d);
       }
     });
-    
     conn.on('close',()=>{
       console.warn("Client: Connessione chiusa");
       audStatus('offline');retry()
     });
-    
     conn.on('error',(err)=>{
       console.error("Client Connection Error:", err);
       audStatus('offline');retry()
     });
   }
-  
-  // Watchdog heartbeat
   setInterval(()=>{
     if(conn&&conn.open&&Date.now()-aud.last>14000){
       console.warn("Client: Heartbeat scaduto");
       audStatus('offline');connect()
     }
   },4000);
-  
   document.addEventListener('visibilitychange',()=>{
     if(!document.hidden&&(!conn||!conn.open))connect()
   });
-  
   audStatus('connecting');makePeer();
 }
 
