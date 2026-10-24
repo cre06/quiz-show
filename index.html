@@ -885,7 +885,10 @@ function edSaveSd(){deck.sudden=$('sdBox').value.split('\n').map(l=>l.trim()).fi
    10. SINCRONIZZAZIONE LIVE (PeerJS / WebRTC) – lato conduttore
    Ai concorrenti vengono inviati SOLO titoli, valori e stato: mai testi o soluzioni.
    ===================================================================== */
-let hostPeer=null,hostId=null,hbN=0;const conns=new Set();
+let hostPeer=null, hostId=null, hbN=0; 
+const conns=new Set();
+let heartbeatInterval = null; // Variabile per gestire il timer dell'heartbeat
+
 function snapshot(){
   const sp=settings.showScores||game.ended;
   return{t:'state',
@@ -895,76 +898,208 @@ function snapshot(){
     players:sp?game.players.map(p=>({n:p.name,s:p.score})):null,
     ended:!!game.ended,sd:!!sd.active};
 }
-function broadcast(){if(!hostPeer)return;const s=snapshot();conns.forEach(c=>{if(c.open)try{c.send(s)}catch(e){}});updateSyncUI()}
+
+function broadcast(){
+  if(!hostPeer || !hostPeer.open) return;
+  const s=snapshot();
+  conns.forEach(c=>{
+    if(c.open) try{c.send(s)} catch(e){}
+  });
+  updateSyncUI();
+}
+
 function setSync(st){window._sync=st;updateSyncUI()}
+
 function updateSyncUI(){
-  const b=$('syncBadge');if(!b)return;const n=[...conns].filter(c=>c.open).length,st=window._sync;
+  const b=$('syncBadge');if(!b)return;
+  const n=[...conns].filter(c=>c.open).length;
+  const st=window._sync;
   b.textContent=st==='online'?`● Live · ${n} connessi`:st==='connecting'?'● Connessione…':'● Sync offline';
   b.style.color=st==='online'?'#34d399':st==='connecting'?'#fbbf24':'#f87171';
-  const q=$('qrCount');if(q)q.textContent=st==='online'?`📶 ${n} telefoni connessi`:'';
+  
+  const q=$('qrCount');
+  if(q) q.textContent=st==='online'?`📶 ${n} telefoni connessi`:'';
 }
+
 function initHostPeer(){
+  // Pulisce eventuali timer precedenti per evitare duplicati
+  if(heartbeatInterval) clearInterval(heartbeatInterval);
+  
   if(!window.Peer){setSync('offline');return}
   setSync('connecting');
-  const id=load(PEER_KEY)||('erm-'+Math.random().toString(36).slice(2,10));
-  hostPeer=new Peer(id,PEER_OPTS);
-  hostPeer.on('open',pid=>{hostId=pid;store(PEER_KEY,pid);setSync('online');renderQR()});
-  hostPeer.on('connection',conn=>{
+  
+  console.log("Inizializzazione PeerJS...");
+  
+  // IMPORTANTE: Passiamo 'undefined' come ID per lasciarlo generare al server
+  // Questo evita l'errore "unavailable-id" causato dal riutilizzo di ID vecchi
+  hostPeer=new Peer(undefined, PEER_OPTS);
+
+  hostPeer.on('open', pid => {
+    hostId = pid;
+    // Salviamo il nuovo ID solo per questa sessione
+    store(PEER_KEY, pid); 
+    console.log("Peer aperto con ID:", pid);
+    setSync('online');
+    renderQR();
+    
+    // Avvia l'heartbeat solo se il peer è aperto
+    heartbeatInterval = setInterval(() => {
+      conns.forEach(c => {
+        if(c.open) try{c.send({t:'hb'})} catch{}
+      });
+      if(++hbN % 4 === 0) broadcast();
+    }, 5000);
+  });
+
+  hostPeer.on('connection', conn => {
+    console.log("Nuova connessione ricevuta da:", conn.peer);
     conns.add(conn);
-    conn.on('open',()=>{try{conn.send(snapshot())}catch{}updateSyncUI()});
-    conn.on('close',()=>{conns.delete(conn);updateSyncUI()});
-    conn.on('error',()=>{conns.delete(conn);updateSyncUI()});
+    conn.on('open', () => {
+      try{conn.send(snapshot())} catch{}
+      updateSyncUI();
+    });
+    conn.on('close', () => {
+      conns.delete(conn);
+      updateSyncUI();
+    });
+    conn.on('error', (err) => {
+      console.warn("Errore connessione client:", err);
+      conns.delete(conn);
+      updateSyncUI();
+    });
   });
-  hostPeer.on('disconnected',()=>{setSync('connecting');try{hostPeer.reconnect()}catch{}});
-  hostPeer.on('error',err=>{
-    console.warn('Peer error',err.type);
-    if(err.type==='unavailable-id'){localStorage.removeItem(PEER_KEY);try{hostPeer.destroy()}catch{}hostPeer=null;setTimeout(initHostPeer,300)}
-    else if(['network','server-error','socket-error','socket-closed'].includes(err.type)){setSync('offline');setTimeout(()=>{if(hostPeer&&hostPeer.disconnected)try{hostPeer.reconnect()}catch{}},4000)}
+
+  hostPeer.on('disconnected', () => {
+    console.warn("Peer disconnesso. Tentativo di riconnessione...");
+    setSync('connecting');
+    try{hostPeer.reconnect()} catch{}
   });
-  // Heartbeat: i telefoni capiscono se il conduttore è vivo; ogni ~20 s anche uno snapshot completo
-  setInterval(()=>{conns.forEach(c=>{if(c.open)try{c.send({t:'hb'})}catch{}});if(++hbN%4===0)broadcast()},5000);
+
+  hostPeer.on('error', err => {
+    console.error('PeerJS Error:', err.type, err);
+    
+    if (err.type === 'unavailable-id') {
+      console.warn("ID non disponibile. Distruzione e ricreazione del Peer...");
+      const oldPeer = hostPeer;
+      hostPeer = null;
+      hostId = null;
+      setSync('connecting');
+      
+      try { oldPeer.destroy(); } catch (e) {}
+      
+      // Ritenta dopo 1 secondo
+      setTimeout(initHostPeer, 1000);
+      return;
+    }
+
+    if (['network', 'server-error', 'socket-error', 'socket-closed'].includes(err.type)) {
+      setSync('offline');
+      console.warn("Errore di rete/server. Tentativo di riconnessione tra 4s...");
+      setTimeout(() => {
+        if(hostPeer && hostPeer.disconnected) try{hostPeer.reconnect()} catch{}
+      }, 4000);
+    }
+  });
 }
 
 /* --- QR --- */
 const isLocalHost=h=>h===''||h==='localhost'||/^127\./.test(h)||/^192\.168\./.test(h)||/^10\./.test(h)||/^172\.(1[6-9]|2\d|3[01])\./.test(h)||h.endsWith('.local');
+
 function baseUrl(){
-  if(settings.publicUrl){try{const u=new URL(settings.publicUrl);u.search='';u.hash='';return u.toString()}catch{}}
-  if(/^https?:$/.test(location.protocol)&&!isLocalHost(location.hostname))return location.origin+location.pathname;
+  if(settings.publicUrl){
+    try{
+      const u=new URL(settings.publicUrl);
+      u.search='';u.hash='';
+      return u.toString()
+    }catch{}
+  }
+  if(/^https?:$/.test(location.protocol)&&!isLocalHost(location.hostname))
+    return location.origin+location.pathname;
   return '';
 }
-const audUrl=()=>{const b=baseUrl();return b&&hostId?b+'?v='+encodeURIComponent(hostId):''};
+
+const audUrl=()=>{
+  const b=baseUrl();
+  return b&&hostId ? b+'?v='+encodeURIComponent(hostId) : '';
+};
+
 function renderQR(){
-  const box=$('qrBox'),url=audUrl(),warn=$('qrWarn');
-  box.innerHTML='';$('qrUrl').value=url;$('pubUrl').value=settings.publicUrl||'';
+  const box=$('qrBox'), url=audUrl(), warn=$('qrWarn');
+  box.innerHTML='';
+  $('qrUrl').value=url;
+  $('pubUrl').value=settings.publicUrl||'';
   $('shareBtn').classList.toggle('hidden',!navigator.share);
+  
   const noBase=!baseUrl();
   warn.classList.toggle('hidden',!noBase);
-  if(noBase){warn.textContent='⚠️ Questa pagina non è raggiungibile da Internet (es. file aperto in locale). Pubblicala su GitHub Pages e incolla qui sotto l\'URL pubblico: senza, i telefoni dei concorrenti non potranno aprirla.';box.textContent=hostId?'Imposta l\'URL pubblico ↓':'Connessione in corso…';return}
-  if(!hostId){box.textContent='Connessione in corso…';return}
+  
+  if(noBase){
+    warn.textContent='⚠️ Questa pagina non è raggiungibile da Internet. Pubblicala su GitHub Pages e incolla qui sotto l\'URL pubblico.';
+    box.textContent=hostId?'Imposta l\'URL pubblico ↓':'Connessione in corso…';
+    return;
+  }
+  
+  if(!hostId){
+    box.textContent='Connessione in corso…';
+    return;
+  }
+  
   const size=Math.max(180,Math.min(innerWidth-70,420,innerHeight-380));
-  if(window.QRCode)new QRCode(box,{text:url,width:size,height:size,colorDark:'#0f0c1b',colorLight:'#ffffff',correctLevel:QRCode.CorrectLevel.M});
-  else box.textContent='Libreria QR non caricata';
+  if(window.QRCode)
+    new QRCode(box,{text:url,width:size,height:size,colorDark:'#0f0c1b',colorLight:'#ffffff',correctLevel:QRCode.CorrectLevel.M});
+  else 
+    box.textContent='Libreria QR non caricata';
 }
-function openQR(){if(!needDeck())return;renderQR();updateSyncUI();openM('qrModal')}
-function savePubUrl(){const v=$('pubUrl').value.trim();if(v){try{new URL(v)}catch{return alert('URL non valido (deve iniziare con https://).')}}settings.publicUrl=v;store(SET_KEY,settings);renderQR();toast('URL salvato ✓')}
-function copyAudUrl(){const u=audUrl();if(!u)return toast('Imposta prima l\'URL pubblico');navigator.clipboard.writeText(u).then(()=>toast('Link copiato ✓'),()=>toast('Copia non riuscita'))}
-function shareAudUrl(){const u=audUrl();if(u&&navigator.share)navigator.share({title:'Erm, Actually!',url:u}).catch(()=>{})}
 
-/* --- Screen Wake Lock (il conduttore usa spesso il telefono) --- */
+function openQR(){if(!needDeck())return;renderQR();updateSyncUI();openM('qrModal')}
+function savePubUrl(){
+  const v=$('pubUrl').value.trim();
+  if(v){try{new URL(v)}catch{return alert('URL non valido (deve iniziare con https://).')}}
+  settings.publicUrl=v;
+  store(SET_KEY,settings);
+  renderQR();
+  toast('URL salvato ✓')
+}
+function copyAudUrl(){
+  const u=audUrl();
+  if(!u)return toast('Imposta prima l\'URL pubblico');
+  navigator.clipboard.writeText(u).then(()=>toast('Link copiato ✓'),()=>toast('Copia non riuscita'))
+}
+function shareAudUrl(){
+  const u=audUrl();
+  if(u&&navigator.share) navigator.share({title:'Erm, Actually!',url:u}).catch(()=>{})
+}
+
+/* --- Screen Wake Lock --- */
 let wl=null;
-function setBanner(extra){$('hostBannerTxt').textContent='📱 Tieni questa scheda in primo piano: se il browser sospende la pagina, i telefoni dei concorrenti smettono di aggiornarsi. '+extra;$('hostBanner').classList.remove('hidden')}
+function setBanner(extra){
+  $('hostBannerTxt').textContent='📱 Tieni questa scheda in primo piano: se il browser sospende la pagina, i telefoni dei concorrenti smettono di aggiornarsi. '+extra;
+  $('hostBanner').classList.remove('hidden')
+}
 async function getWakeLock(){
-  if(!('wakeLock' in navigator)){setBanner('⚠️ Il tuo browser non può tenere lo schermo acceso da solo: disattiva lo spegnimento automatico nelle impostazioni del telefono.');return}
-  try{wl=await navigator.wakeLock.request('screen');setBanner('🔒 Schermo mantenuto acceso.');wl.addEventListener('release',()=>{wl=null})}
-  catch(e){setBanner('⚠️ Impossibile bloccare lo spegnimento dello schermo: tienilo acceso manualmente.')}
+  if(!('wakeLock' in navigator)){
+    setBanner('⚠️ Il tuo browser non può tenere lo schermo acceso da solo: disattiva lo spegnimento automatico nelle impostazioni del telefono.');
+    return
+  }
+  try{
+    wl=await navigator.wakeLock.request('screen');
+    setBanner('🔒 Schermo mantenuto acceso.');
+    wl.addEventListener('release',()=>{wl=null})
+  } catch(e){
+    setBanner('⚠️ Impossibile bloccare lo spegnimento dello schermo: tienilo acceso manualmente.')
+  }
 }
 document.addEventListener('visibilitychange',()=>{
   if(document.hidden||$('hostApp').classList.contains('hidden'))return;
-  if(!wl)getWakeLock();
-  if(hostPeer){if(hostPeer.disconnected)try{hostPeer.reconnect()}catch{}broadcast()}
+  if(!wl) getWakeLock();
+  if(hostPeer){
+    if(hostPeer.disconnected) try{hostPeer.reconnect()} catch{}
+    broadcast()
+  }
 });
-document.addEventListener('click',()=>{if(!$('hostApp').classList.contains('hidden')&&!wl&&'wakeLock' in navigator)getWakeLock()},{passive:true});
-
+document.addEventListener('click',()=>{
+  if(!$('hostApp').classList.contains('hidden')&&!wl&&'wakeLock' in navigator) getWakeLock()
+},{passive:true});
 /* =====================================================================
    11. VISTA CONCORRENTI (smartphone)
    ===================================================================== */
