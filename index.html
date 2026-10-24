@@ -1205,7 +1205,7 @@ function snapshot(){
     cats:deck?deck.categories.filter(c=>c.cards.length).map(c=>({id:c.id,title:c.title,emoji:c.emoji,cards:c.cards.slice().sort((a,b)=>a.points-b.points).map(k=>({id:k.id,p:k.points,d:!!game.completed[k.id]}))})):[],
     show:deck&&deck.showdown?{id:'showdown',p:deck.showdown.points,d:!!game.completed.showdown}:null,
     open:cur?{id:cur.id,cat:cur.catTitle,p:cur.card.points,buzz:cur.buzzed}:null,
-    players:game.players.map(p=>(settings.showScores||game.ended)?{n:p.name,s:p.score}:{n:p.name}),
+    players:game.players.map(p=>({n:p.name,s:p.score})),
     ended:!!game.ended,sd:!!sd.active};
 }
 function broadcast(){
@@ -1242,14 +1242,13 @@ function initHostPeer(){
     c.on('message',(t,payload)=>{
       try{
         const d=JSON.parse(payload.toString());
-       if(d&&d.t==='join'&&d.name){
-  const nm=String(d.name).trim().slice(0,30);
-  // un solo giocatore per nome, anche se la richiesta arriva da più broker
-  if(nm&&!game.players.some(p=>p.name.toLowerCase()===nm.toLowerCase())){
-    game.players.push({id:Date.now()+Math.floor(Math.random()*999),name:nm,score:0,found:0,wrong:0});
-    commit();
-  }
-}else if(d&&d.id){
+        if(d&&d.t==='join'&&d.name){
+          const nm=String(d.name).trim().slice(0,30);
+          // un solo giocatore per nome, anche se la richiesta arriva da più broker
+          if(nm&&!game.players.some(p=>p.name.toLowerCase()===nm.toLowerCase())){
+            game.players.push({id:Date.now()+Math.floor(Math.random()*999),name:nm,score:0,found:0,wrong:0});
+            commit();
+          }
         }else if(d&&d.id){
           seen.set(d.id,Date.now());updateSyncUI()
         }
@@ -1574,7 +1573,7 @@ function startAudience(room){
     });
   });
 
-  setInterval(()=>{   ping();status();   // finché l'host non mi ha registrato, ripeto la richiesta (l'host ignora i doppioni)   if(audMe&&joinScreen&&!joinScreen.classList.contains('hidden'))sendJoin(); },5000);
+  setInterval(()=>{     ping();status();     // finché l'host non mi ha registrato, ripeto la richiesta di join     if(audMe&&joinScreen&&!joinScreen.classList.contains('hidden'))tryEnter();   },5000);
   document.addEventListener('visibilitychange',()=>{if(!document.hidden){ping();status()}});
   audStatus('connecting');
   initThemes();
