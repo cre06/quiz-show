@@ -3,302 +3,688 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="theme-color" content="#060CE9">
-<title>JEOPARDY!</title>
+<meta name="theme-color" content="#0c0a14">
+<title>ERM, ACTUALLY!</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://unpkg.com/mqtt@5/dist/mqtt.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Poppins:wght@400;600;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600&family=Poppins:wght@400;600;800&family=Caveat:wght@500;700&family=Permanent+Marker&family=Orbitron:wght@400;700&family=Share+Tech+Mono&family=Playfair+Display:wght@700;900&family=Pacifico&display=swap" rel="stylesheet">
 <style>
-:root{--blue:#060CE9;--blue-d:#0408a8;--gold:#F4D03F;--paper:#fdf6e3;--ink:#060CE9}
+/* ============ BASE & SFONDO ANIMATO ============ */
 *{-webkit-tap-highlight-color:transparent}
-body{font-family:'Poppins',sans-serif;background:var(--blue);color:var(--paper);overflow-x:hidden}
-.font-serif{font-family:'Playfair Display',serif}
-.gold{color:var(--gold)}.muted{color:rgba(255,255,255,.6)}.small{font-size:.7rem;letter-spacing:.08em;text-transform:uppercase;font-weight:800}
-.blob{position:fixed;border-radius:50%;filter:blur(100px);opacity:.35;z-index:-1;animation:blob 20s ease-in-out infinite alternate;pointer-events:none}
-.b1{width:500px;height:500px;background:#0033ff;top:-120px;left:-120px}
-.b2{width:460px;height:460px;background:#0000aa;bottom:-140px;right:-100px;animation-delay:-8s}
-@keyframes blob{to{transform:translate(80px,-50px) scale(1.3)}}
-.glass{background:rgba(10,20,60,.78);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,.12)}
-.logo{background:linear-gradient(90deg,var(--gold),#ffe07a,var(--gold));background-size:200% 100%;animation:shine 3s linear infinite;color:var(--ink)}
+body{font-family:'Plus Jakarta Sans',sans-serif;background:#0c0a14;color:#f3f4f6;overflow-x:hidden}
+.font-heading{font-family:'Outfit',sans-serif}
+.blob{position:fixed;border-radius:50%;filter:blur(90px);opacity:.35;z-index:-1;animation:blob 18s ease-in-out infinite alternate;pointer-events:none}
+.b1{width:420px;height:420px;background:#6d28d9;top:-100px;left:-100px}
+.b2{width:380px;height:380px;background:#ec4899;bottom:-120px;right:-80px;animation-delay:-6s}
+.b3{width:300px;height:300px;background:#f59e0b;top:40%;left:55%;opacity:.14;animation-delay:-11s}
+@keyframes blob{to{transform:translate(60px,-40px) scale(1.25)}}
+.spark{position:fixed;width:3px;height:3px;border-radius:50%;background:#fde68a;z-index:-1;opacity:0;animation:spark linear infinite;pointer-events:none}
+@keyframes spark{0%{opacity:0;transform:translateY(0)}20%{opacity:.8}100%{opacity:0;transform:translateY(-140px)}}
+.glass{background:rgba(26,21,40,.78);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,.08)}
+.logo{background:linear-gradient(90deg,#f59e0b,#fde68a,#f59e0b);background-size:200% 100%;animation:shine 3s linear infinite;color:#0f172a}
 @keyframes shine{to{background-position:-200% 0}}
-.badge{font-size:11px;font-weight:800;padding:.2rem .65rem;border-radius:999px;border:1px solid rgba(255,255,255,.2);background:rgba(0,0,0,.4);white-space:nowrap}
-.banner{background:rgba(4,8,168,.85);border-bottom:1px solid rgba(244,208,63,.3);color:var(--gold);font-size:11px;padding:.5rem 1rem;display:flex;justify-content:space-between;gap:.75rem}
-.box{padding:.9rem;border-radius:1rem;background:rgba(0,0,0,.35);border:1px solid rgba(244,208,63,.3)}
-.btn{padding:.55rem .9rem;border-radius:.8rem;font-weight:800;font-size:.85rem;border:1px solid rgba(255,255,255,.3);background:rgba(255,255,255,.1);color:var(--gold);transition:transform .1s,background .2s;cursor:pointer;min-height:42px}
-.btn:hover{background:rgba(255,255,255,.2);border-color:var(--gold)}.btn:active{transform:scale(.94)}.btn:disabled{opacity:.5;cursor:not-allowed}
-.btn-gold{background:var(--gold);color:var(--ink);border-color:var(--gold);box-shadow:0 0 22px rgba(244,208,63,.4)}.btn-gold:hover{background:#ffe07a}
-.btn-blue{background:var(--blue);color:var(--gold);border:2px solid var(--gold)}.btn-blue:hover{background:var(--blue-d)}
-.btn-green{background:#0aa56f;color:#fff;border-color:#0aa56f}.btn-green:hover{background:#12b885}
-.btn-red{background:#b91c1c;color:#fff;border-color:#b91c1c}.btn-red:hover{background:#e11d48}
-.inp{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.25);border-radius:.8rem;padding:.55rem .7rem;color:#fff;font-size:.9rem;width:100%}
-.inp:focus{outline:none;border-color:var(--gold);box-shadow:0 0 0 3px rgba(244,208,63,.25)}
-.inp option{color:#000}
-.check{accent-color:var(--gold)}
-/* modali */
-.modal{display:none;position:fixed;inset:0;z-index:50;background:rgba(6,12,120,.94);align-items:center;justify-content:center;padding:10px;overflow:hidden}
-.modal.open{display:flex;animation:fadeIn .25s}.modal.closing{animation:fadeOut .2s forwards}
-.modal.open>.pop{animation:popIn .4s cubic-bezier(.2,1.1,.3,1)}.modal.closing>.pop{animation:popOut .2s forwards}
-.modal.full{padding:0}.modal.full>.pop{max-width:none!important;width:100%;height:100%;max-height:100%!important;border-radius:0!important}
-@keyframes fadeIn{from{opacity:0}}@keyframes fadeOut{to{opacity:0}}
-@keyframes popIn{from{opacity:0;transform:perspective(900px) rotateX(12deg) scale(.8)}}@keyframes popOut{to{opacity:0;transform:scale(.9)}}
-/* tabellone */
-.cat-head{padding:.7rem .4rem;border-radius:.9rem;text-align:center;background:rgba(0,0,0,.35);border:1px solid rgba(244,208,63,.35)}
-.cat-head h3{font-family:'Playfair Display',serif;font-weight:900;font-size:.8rem;text-transform:uppercase;letter-spacing:.05em;word-break:break-word}
-.tile{width:100%;padding:1.1rem 0;border-radius:.9rem;font-family:'Playfair Display',serif;font-weight:900;font-size:1.6rem;color:var(--gold);background:rgba(255,255,255,.06);border:2px solid var(--gold);transition:transform .2s,box-shadow .2s;cursor:pointer;position:relative}
-.tile:hover{transform:translateY(-4px) scale(1.03);box-shadow:0 12px 30px -6px rgba(244,208,63,.4)}.tile:active{transform:scale(.94)}
-.tile-done{opacity:.22;text-decoration:line-through;filter:grayscale(1)}
-.tile-dd::after{content:'DD';position:absolute;top:4px;right:4px;background:#b91c1c;color:#fff;border-radius:999px;padding:0 6px;font-size:10px;font-weight:900;font-family:'Poppins',sans-serif}
-.card-question{font-family:'Playfair Display',serif;font-size:1.7rem;line-height:1.35;text-align:center;color:var(--paper);padding:1.1rem;border:2px solid var(--gold);border-radius:1rem;background:rgba(255,255,255,.06)}
-.ans-host{padding:.7rem 1rem;border-radius:1rem;border:2px dashed rgba(244,208,63,.5);background:rgba(0,0,0,.3)}
-.ans-host #mAnswer{font-family:'Playfair Display',serif;font-size:1.3rem;color:var(--gold);font-weight:700}
-.badge-dd{display:inline-block;background:#b91c1c;color:#fff;border-radius:999px;padding:.1rem .6rem;font-size:.7rem;font-weight:900;letter-spacing:.05em;font-family:'Poppins',sans-serif}
-.timer{font-family:'Playfair Display',serif;font-weight:900;font-size:1.5rem;color:var(--gold)}.timer.danger{color:#ff6b6b;animation:pulse .5s infinite alternate}
-@keyframes pulse{to{transform:scale(1.12)}}
-.row{display:flex;align-items:center;gap:.5rem;padding:.55rem .7rem;border-radius:.8rem;background:rgba(0,0,0,.3);border:1px solid rgba(255,255,255,.12)}
-/* buzzer telefono */
-.buzz-big{width:min(300px,86vw);height:min(150px,40vw);border-radius:2rem;font-family:'Playfair Display',serif;font-weight:900;font-size:clamp(1.5rem,8vw,2.6rem);border:none;cursor:pointer;transition:transform .1s,filter .2s;color:var(--ink);background:var(--gold);box-shadow:0 0 40px rgba(244,208,63,.6)}
-.buzz-big:active{transform:scale(.92)}
-.buzz-big.waiting{opacity:.5;background:#8a8fb8;box-shadow:none;cursor:not-allowed}
-.buzz-big.first{background:#0aa56f;color:#fff;box-shadow:0 0 40px rgba(10,165,111,.7)}
-.buzz-big.late{background:#b91c1c;color:#fff;box-shadow:none;opacity:.8}
-/* punteggi */
-.float-pts{position:fixed;z-index:90;pointer-events:none;font-family:'Playfair Display',serif;font-weight:900;font-size:2rem;text-shadow:0 0 14px currentColor;animation:floatUp 1.2s ease-out forwards;white-space:nowrap}
-.float-pts.pos{color:#2fe0a0}.float-pts.neg{color:#ff6b6b}
+
+/* ============ PULSANTI ============ */
+.btn{padding:.55rem .85rem;border-radius:.75rem;font-weight:700;font-size:.78rem;border:1px solid #334155;background:#1e293b;color:#e2e8f0;transition:transform .12s,background .15s,box-shadow .2s;cursor:pointer;min-height:40px}
+.btn:hover{background:#334155}.btn:active{transform:scale(.93)}
+.btn-amber{background:#f59e0b;color:#0f172a;border-color:#f59e0b;box-shadow:0 0 18px rgba(245,158,11,.3)}.btn-amber:hover{background:#fbbf24}
+.btn-green{background:#059669;border-color:#059669;color:#fff}.btn-green:hover{background:#10b981}
+.btn-red{background:#450a0a;border-color:#7f1d1d;color:#fca5a5}.btn-red:hover{background:#7f1d1d}
+.btn-purple{background:#7c3aed;border-color:#7c3aed;color:#fff}.btn-purple:hover{background:#8b5cf6}
+.inp{background:#020617;border:1px solid #334155;border-radius:.7rem;padding:.55rem .7rem;color:#fff;font-size:.85rem;width:100%}
+.inp:focus{outline:none;border-color:#8b5cf6;box-shadow:0 0 0 3px rgba(139,92,246,.25)}
+
+/* ============ MODALI ANIMATE ============ */
+.modal{display:none;position:fixed;inset:0;z-index:50;background:rgba(2,6,23,.92);align-items:center;justify-content:center;padding:10px;overflow:hidden}
+.modal.open{display:flex;animation:fadeIn .25s}
+.modal.closing{animation:fadeOut .2s forwards}
+.modal.open>.pop{animation:popIn .4s cubic-bezier(.2,1.1,.3,1)}
+.modal.closing>.pop{animation:popOut .2s forwards}
+.modal.full{padding:0}
+.modal.full>.pop{max-width:none!important;width:100%;height:100%;max-height:100%!important;border-radius:0!important}
+@keyframes fadeIn{from{opacity:0}}
+@keyframes fadeOut{to{opacity:0}}
+@keyframes popIn{from{opacity:0;transform:perspective(900px) rotateX(18deg) scale(.7)}}
+@keyframes popOut{to{opacity:0;transform:scale(.85)}}
+
+/* ============ EVIDENZIATORE ERRORI ============ */
+.wrong-highlight{background:#fbbf24;color:#1c1917;font-weight:800;padding:1px 6px;border-radius:6px;box-shadow:0 0 0 2px rgba(251,191,36,.35);-webkit-box-decoration-break:clone;box-decoration-break:clone}
+.wrong-highlight.flash{animation:flash .9s}
+@keyframes flash{0%{background:#fff;box-shadow:0 0 0 0 rgba(251,191,36,.95)}50%{background:#fff;box-shadow:0 0 0 16px rgba(251,191,36,0)}100%{background:#fbbf24}}
+.w{display:inline-block;opacity:0;animation:wordIn .35s forwards}
+@keyframes wordIn{from{opacity:0;transform:translateY(8px);filter:blur(4px)}to{opacity:1;transform:none;filter:none}}
+
+/* ============ TABELLONE CONDUTTORE ============ */
+.tile{width:100%;padding:1.05rem 0;border-radius:.85rem;font-family:'Outfit',sans-serif;font-weight:800;font-size:1.2rem;color:#fbbf24;background:rgba(15,12,27,.9);border:1px solid rgba(139,92,246,.35);transition:transform .2s,border-color .2s,box-shadow .2s;cursor:pointer}
+.tile:hover{transform:translateY(-4px) scale(1.03);border-color:#fbbf24;box-shadow:0 12px 28px -6px rgba(245,158,11,.5)}
+.tile:active{transform:scale(.94)}
+.tile-done{opacity:.3;text-decoration:line-through}
+.tile-flip{animation:flipDone .7s}
+@keyframes flipDone{0%{transform:perspective(500px) rotateY(0)}50%{transform:perspective(500px) rotateY(90deg)}100%{transform:perspective(500px) rotateY(0)}}
+
+/* ============ BUZZER, TIMER ============ */
+#buzzWrap{position:relative;display:inline-block}
+.buzz{padding:.9rem 1.6rem;border-radius:1rem;font-family:'Outfit',sans-serif;font-weight:900;font-size:1.25rem;color:#0f172a;background:linear-gradient(135deg,#fbbf24,#f59e0b);box-shadow:0 0 28px rgba(245,158,11,.55),inset 0 -4px 0 rgba(0,0,0,.2);transition:transform .1s}
+.buzz.squish{animation:squish .45s}
+@keyframes squish{0%{transform:scale(1)}30%{transform:scale(.88,.8)}60%{transform:scale(1.08,1.12)}100%{transform:scale(1)}}
+.wave{position:absolute;inset:0;border-radius:1rem;border:3px solid #fbbf24;pointer-events:none;animation:wave .8s ease-out forwards}
+@keyframes wave{to{transform:scale(2.2,2.8);opacity:0}}
+#ring{transition:stroke-dashoffset 1s linear,stroke .3s}
+.timer-danger{animation:tpulse .5s infinite alternate}
+@keyframes tpulse{to{transform:scale(1.1)}}
+
+/* ============ JOKER ============ */
+.joker-stage{position:relative;perspective:900px}
+.joker-card{display:flex;align-items:center;gap:.9rem;padding:.9rem 1rem;border-radius:1rem;background:linear-gradient(120deg,rgba(131,24,67,.7),rgba(88,28,135,.7));border:1px solid rgba(236,72,153,.6)}
+.joker-card.draw{animation:jokerDraw 1.1s cubic-bezier(.2,1.2,.3,1)}
+@keyframes jokerDraw{0%{transform:rotateY(180deg) scale(.4);opacity:0}60%{transform:rotateY(-12deg) scale(1.08);opacity:1}100%{transform:none}}
+.sp{position:absolute;font-size:1.1rem;opacity:0;animation:sp 1.2s ease-out forwards;pointer-events:none}
+@keyframes sp{0%{opacity:0;transform:scale(.3)}30%{opacity:1}100%{opacity:0;transform:translateY(-26px) scale(1.2) rotate(40deg)}}
+
+/* ============ PUNTEGGI ============ */
+.float-pts{position:fixed;z-index:90;pointer-events:none;font-family:'Outfit',sans-serif;font-weight:900;font-size:2rem;text-shadow:0 0 14px currentColor;animation:floatUp 1.3s ease-out forwards;white-space:nowrap}
+.float-pts.pos{color:#34d399}.float-pts.neg{color:#f87171}
 @keyframes floatUp{0%{opacity:0;transform:translate(-50%,10px) scale(.6)}15%{opacity:1;transform:translate(-50%,-10px) scale(1.2)}100%{opacity:0;transform:translate(-50%,-90px) scale(1)}}
-#audScore{font-family:'Playfair Display',serif;font-weight:900;font-size:1.3rem;color:var(--gold)}
-.score-pop{animation:scorePop .35s cubic-bezier(.34,1.56,.64,1)}@keyframes scorePop{50%{transform:scale(1.3)}}
-.pod{background:linear-gradient(to top,var(--blue-d),var(--gold));border-radius:.75rem .75rem 0 0;display:flex;justify-content:center;padding-top:.5rem;font-size:2rem;margin-top:.4rem;transform-origin:bottom;animation:rise .9s cubic-bezier(.2,1,.3,1) backwards}
+.crown{display:inline-block;animation:crown 1.2s ease-in-out infinite}
+@keyframes crown{50%{transform:translateY(-3px) rotate(-8deg)}}
+.pop-in{animation:popRow .45s cubic-bezier(.2,1.4,.3,1)}
+@keyframes popRow{from{transform:scale(.92);background:rgba(16,185,129,.35)}}
+
+/* ============ PODIO ============ */
+.pod{transform-origin:bottom;animation:rise .9s cubic-bezier(.2,1,.3,1) backwards}
 @keyframes rise{from{transform:scaleY(0)}}
-/* vista concorrenti */
-.aud-col{flex:1 1 0;min-width:0;display:flex;flex-direction:column;gap:.5rem;max-width:200px}
-.aud-title{font-family:'Playfair Display',serif;font-weight:900;font-size:clamp(9px,2.8vw,13px);letter-spacing:.04em;text-transform:uppercase;word-break:break-word;line-height:1.15}
-.aud-tile{padding:.95rem 0;border-radius:.8rem;text-align:center;font-family:'Playfair Display',serif;font-weight:900;font-size:clamp(1rem,4vw,1.5rem);color:var(--gold);background:rgba(255,255,255,.06);border:2px solid var(--gold);transition:all .3s}
-.aud-tile.tile-gone{opacity:.12;filter:grayscale(1)}
-.aud-tile.tile-open{background:rgba(244,208,63,.25);animation:tp 1.2s infinite}@keyframes tp{50%{box-shadow:0 0 25px rgba(244,208,63,.6)}}
-.jp-overlay{background:rgba(6,12,120,.97)}
-.spin{animation:spin 1.2s linear infinite;display:inline-block}@keyframes spin{to{transform:rotate(360deg)}}
-#toast{position:fixed;left:50%;bottom:90px;transform:translate(-50%,20px);opacity:0;pointer-events:none;transition:.3s;z-index:95;padding:.6rem 1rem;border-radius:.8rem;background:rgba(6,12,120,.95);border:1px solid var(--gold);font-size:.9rem;font-weight:700;box-shadow:0 10px 30px rgba(0,0,0,.6)}
+
+/* ============ TOAST, DRAWER ============ */
+#toast{position:fixed;left:50%;bottom:84px;transform:translate(-50%,20px);opacity:0;pointer-events:none;transition:.3s;z-index:95;padding:.55rem 1rem;border-radius:.8rem;background:#1e293b;border:1px solid #475569;font-size:.85rem;font-weight:600;box-shadow:0 10px 30px rgba(0,0,0,.5)}
 #toast.show{opacity:1;transform:translate(-50%,0)}
 @media (max-width:1023px){
-  #sidePanel{position:fixed;left:0;right:0;bottom:0;z-index:40;max-height:78vh;overflow-y:auto;background:#0a1070;border-top:2px solid var(--gold);border-radius:1.5rem 1.5rem 0 0;padding:1rem;transform:translateY(105%);transition:transform .35s cubic-bezier(.2,.9,.3,1);box-shadow:0 -20px 50px rgba(0,0,0,.6)}
+  #sidePanel{position:fixed;left:0;right:0;bottom:0;z-index:40;max-height:78vh;overflow-y:auto;background:#120e22;border-top:1px solid rgba(251,191,36,.35);border-radius:1.5rem 1.5rem 0 0;padding:1rem;transform:translateY(105%);transition:transform .35s cubic-bezier(.2,.9,.3,1);box-shadow:0 -20px 50px rgba(0,0,0,.6)}
   #sidePanel.open{transform:none}
 }
-::-webkit-scrollbar{width:8px;height:8px}::-webkit-scrollbar-thumb{background:rgba(244,208,63,.3);border-radius:4px}
-@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}
+
+/* ============ VISTA CONCORRENTI – BASE PREMIUM ============ */
+#audApp{transition:background 0.7s ease,color 0.7s ease}
+.aud-col{flex:1 1 0;min-width:0;display:flex;flex-direction:column;gap:.5rem;max-width:200px;transition:all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1)}
+.aud-col.col-gone{flex-grow:0;max-width:0;opacity:0;transform:scale(0.95);margin-left:-.25rem;margin-right:-.25rem;pointer-events:none;overflow:hidden}
+.aud-head{padding:.5rem .15rem;border-radius:.8rem;text-align:center;transition:all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)}
+.aud-title{font-family:'Outfit',sans-serif;font-weight:800;font-size:9px;letter-spacing:.04em;text-transform:uppercase;word-break:break-word;hyphens:auto;line-height:1.15;transition:all 0.4s ease}
+.aud-tile{padding:.95rem 0;border-radius:.8rem;text-align:center;font-family:'Outfit',sans-serif;font-weight:800;font-size:clamp(.9rem,4vw,1.3rem);color:#fbbf24;background:rgba(15,12,27,.9);border:1px solid rgba(139,92,246,.35);transition:all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);cursor:pointer;position:relative;overflow:hidden}
+.aud-tile.tile-gone{opacity:0;transform:scale(0.8) rotate(-8deg);filter:blur(4px);pointer-events:none}
+.aud-tile.tile-open{border-color:#fbbf24;animation:tilePulse 1s infinite}
+@keyframes tilePulse{50%{transform:scale(1.07);box-shadow:0 0 22px rgba(245,158,11,.6)}}
+#audShow{transition:max-height .7s,opacity .6s,margin .7s,padding .7s;max-height:120px;overflow:hidden}
+#audShow.show-gone{max-height:0;opacity:0;margin:0;padding-top:0;padding-bottom:0;border-width:0}
+.no-anim,.no-anim *{transition:none!important}
+.banner-in{animation:bannerIn .4s cubic-bezier(.2,1.3,.3,1)}
+@keyframes bannerIn{from{opacity:0;transform:translateY(-12px) scale(.9)}}
+.spin{animation:spin 1.1s linear infinite;display:inline-block}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* Tap Jelly */
+@keyframes jellyTap{0%{transform:scale(1)}30%{transform:scale(0.92)}60%{transform:scale(1.08)}100%{transform:scale(1)}}
+.jelly-tap{animation:jellyTap 0.45s cubic-bezier(0.34, 1.56, 0.64, 1);}
+
+/* Punteggio personale animato */
+#myScore.score-pop{animation:scorePop .35s cubic-bezier(0.34, 1.56, 0.64, 1)}
+@keyframes scorePop{0%{transform:scale(1)}50%{transform:scale(1.25)}100%{transform:scale(1)}}
+
+/* =================================================================
+   25 TEMI PREMIUM – VISTA CONCORRENTI
+   ================================================================= */
+
+/* 1. Kawaii Pastel 🧸 */
+.theme-kawaii #audApp{background:linear-gradient(180deg,#fce7f3 0%,#f0e6ff 100%);color:#6d28d9}
+.theme-kawaii .aud-tile{background:rgba(255,245,250,0.8);border:2px solid #f0a6ca;color:#8e44ad;border-radius:24px;font-family:'Fredoka',cursive,sans-serif;box-shadow:0 6px 18px rgba(240,166,202,0.18)}
+.theme-kawaii .aud-tile:hover{border-color:#f06292;transform:translateY(-4px) scale(1.02)}
+.theme-kawaii .aud-tile.tile-open{border-color:#f06292;box-shadow:0 0 24px rgba(240,98,146,0.45)}
+.theme-kawaii .aud-tile.tile-gone{filter:blur(4px);transform:scale(0.78) rotate(-6deg)}
+.theme-kawaii .aud-head{background:rgba(255,248,252,0.6);border-bottom:2px solid #f0a6ca}
+.theme-kawaii .aud-title{color:#c2185b;font-family:'Fredoka',cursive,sans-serif}
+.theme-kawaii #audStatus{background:rgba(240,98,146,0.15);border-color:#f06292;color:#c2185b}
+.theme-kawaii #audShow{background:#f0a6ca;color:#4a044e}
+
+/* 2. Strawberry Milk 🍓 */
+.theme-strawberry #audApp{background:#fff5f7;color:#701a36}
+.theme-strawberry .aud-tile{background:rgba(255,240,245,0.9);border:2px solid #ffb7c5;color:#9d174d;border-radius:20px;font-family:'Poppins',sans-serif;box-shadow:inset 0 2px 6px rgba(255,255,255,0.6),0 4px 14px rgba(255,107,132,0.12)}
+.theme-strawberry .aud-tile:hover{border-color:#ff8fa3;transform:translateY(-3px)}
+.theme-strawberry .aud-tile.tile-open{border-color:#ff8fa3;box-shadow:0 0 20px rgba(255,107,132,0.35)}
+.theme-strawberry .aud-tile.tile-gone{filter:blur(4px);transform:scale(0.8) rotate(-5deg)}
+.theme-strawberry .aud-head{background:rgba(255,250,251,0.8);border-bottom:2px solid #ffb7c5}
+.theme-strawberry .aud-title{color:#be185d;font-weight:800}
+.theme-strawberry #audStatus{background:rgba(255,107,132,0.15);border-color:#ff8fa3;color:#be185d}
+
+/* 3. Unicorn Magic 🦄 */
+.theme-unicorn #audApp{background:linear-gradient(135deg,#ff9a9e 0%,#fad0c4 50%,#a18cd1 100%);color:#4a0e4e;background-attachment:fixed}
+.theme-unicorn .aud-tile{background:rgba(255,255,255,0.55);border:2px solid #d8b4fe;color:#6b21a8;border-radius:18px;font-family:'Poppins',sans-serif;box-shadow:0 0 25px rgba(216,180,254,0.35)}
+.theme-unicorn .aud-tile:hover{border-color:#f0abfc;transform:translateY(-3px) scale(1.03)}
+.theme-unicorn .aud-tile.tile-open{border-color:#f0abfc;box-shadow:0 0 35px rgba(240,171,252,0.6)}
+.theme-unicorn .aud-tile.tile-gone{filter:blur(5px);transform:scale(0.82) rotate(-4deg)}
+.theme-unicorn .aud-head{background:rgba(255,255,255,0.4);border-bottom:2px solid #d8b4fe}
+.theme-unicorn .aud-title{color:#7e22ce;text-shadow:0 0 8px rgba(255,255,255,0.6)}
+.theme-unicorn #audStatus{background:rgba(216,180,254,0.25);border-color:#d8b4fe;color:#7e22ce}
+.theme-unicorn #audApp::after{content:'';position:fixed;inset:0;background-image:radial-gradient(circle at 20% 30%, rgba(255,255,255,0.35) 0%, transparent 40%),radial-gradient(circle at 80% 70%, rgba(255,240,255,0.3) 0%, transparent 45%);pointer-events:none;z-index:0;animation:unicornSparkle 8s ease-in-out infinite}
+@keyframes unicornSparkle{0%,100%{opacity:0.6}50%{opacity:1}}
+
+/* 4. Floral Garden 🌷 */
+.theme-floral #audApp{background:#e8f5e9;color:#1b5e20}
+.theme-floral .aud-tile{background:rgba(200,230,201,0.85);border:2px solid #81c784;color:#2e7d32;border-radius:16px;font-family:'Playfair Display',serif;box-shadow:0 4px 12px rgba(129,199,132,0.15)}
+.theme-floral .aud-tile:hover{border-color:#4caf50;transform:translateY(-3px)}
+.theme-floral .aud-tile.tile-open{border-color:#4caf50;box-shadow:0 0 22px rgba(76,175,80,0.35)}
+.theme-floral .aud-tile.tile-gone{filter:blur(4px);transform:scale(0.8) rotate(-6deg)}
+.theme-floral .aud-head{background:rgba(232,245,233,0.7);border-bottom:2px solid #81c784}
+.theme-floral .aud-title{color:#1b5e20;font-family:'Playfair Display',serif;letter-spacing:0.05em}
+.theme-floral #audStatus{background:rgba(76,175,80,0.15);border-color:#4caf50;color:#1b5e20}
+
+/* 5. Bubble Tea 🧋 */
+.theme-bubbletea #audApp{background:#f5e6d3;color:#5d4037}
+.theme-bubbletea .aud-tile{background:rgba(230,211,197,0.85);border:2px solid #d4a373;color:#5d4037;border-radius:30px;font-family:'Poppins',sans-serif;box-shadow:0 6px 16px rgba(212,163,115,0.15)}
+.theme-bubbletea .aud-tile:hover{border-color:#bc6c25;transform:translateY(-4px)}
+.theme-bubbletea .aud-tile.tile-open{border-color:#bc6c25;box-shadow:0 0 24px rgba(188,108,37,0.35)}
+.theme-bubbletea .aud-tile.tile-gone{filter:blur(4px);transform:scale(0.82) rotate(-5deg)}
+.theme-bubbletea .aud-head{background:rgba(245,230,211,0.7);border-bottom:2px solid #d4a373}
+.theme-bubbletea .aud-title{color:#8d5524;font-weight:800}
+.theme-bubbletea #audStatus{background:rgba(212,163,115,0.15);border-color:#bc6c25;color:#8d5524}
+
+/* 6. Principessa Disney 👑 */
+.theme-disney #audApp{background:linear-gradient(180deg,#f3e5f5 0%,#e1bee7 100%);color:#4a148c}
+.theme-disney .aud-tile{background:rgba(225,190,231,0.7);border:2px solid #ce93d8;color:#6a1b9a;border-radius:14px;font-family:'Playfair Display',serif;box-shadow:0 6px 20px rgba(206,147,216,0.25)}
+.theme-disney .aud-tile:hover{border-color:#e1bee7;transform:translateY(-4px)}
+.theme-disney .aud-tile.tile-open{border-color:#e1bee7;box-shadow:0 0 30px rgba(166,87,221,0.5)}
+.theme-disney .aud-tile.tile-gone{filter:blur(4px);transform:scale(0.8) rotate(-6deg)}
+.theme-disney .aud-head{background:rgba(243,229,245,0.8);border-bottom:2px solid #ce93d8}
+.theme-disney .aud-title{color:#4a148c;font-family:'Playfair Display',serif;font-weight:900}
+.theme-disney #audStatus{background:rgba(206,147,216,0.25);border-color:#e1bee7;color:#6a1b9a}
+
+/* 7. Coquette Bow 🎀 */
+.theme-coquette #audApp{background:#fff1f2;color:#880e4f}
+.theme-coquette .aud-tile{background:rgba(255,228,240,0.8);border:2px solid #f8bbd0;color:#ad1457;border-radius:20px;font-family:'Caveat',cursive,sans-serif;font-style:italic;box-shadow:0 4px 14px rgba(248,187,208,0.2)}
+.theme-coquette .aud-tile:hover{border-color:#f48fb1;transform:translateY(-3px) rotate(-1deg)}
+.theme-coquette .aud-tile.tile-open{border-color:#f48fb1;box-shadow:0 0 24px rgba(244,114,182,0.4)}
+.theme-coquette .aud-tile.tile-gone{filter:blur(4px);transform:scale(0.8) rotate(4deg)}
+.theme-coquette .aud-head{background:rgba(255,241,242,0.7);border-bottom:2px solid #f8bbd0}
+.theme-coquette .aud-title{color:#c2185b;font-family:'Caveat',cursive,sans-serif;font-weight:700;font-size:clamp(11px,3vw,14px)}
+.theme-coquette #audStatus{background:rgba(248,187,208,0.15);border-color:#f48fb1;color:#ad1457}
+
+/* 8. Country Club ⛳ */
+.theme-country #audApp{background:#e8f5e9;color:#1b5e20}
+.theme-country .aud-tile{background:#ffffff;border:2px solid #2e7d32;color:#1b5e20;border-radius:12px;font-family:'Poppins',sans-serif;font-weight:800;box-shadow:0 4px 12px rgba(46,125,50,0.12)}
+.theme-country .aud-tile:hover{border-color:#388e3c;transform:translateY(-3px)}
+.theme-country .aud-tile.tile-open{border-color:#388e3c;box-shadow:0 0 22px rgba(56,142,60,0.35)}
+.theme-country .aud-tile.tile-gone{filter:blur(4px);transform:scale(0.8) rotate(-4deg)}
+.theme-country .aud-head{background:#ffffff;border-bottom:3px solid #2e7d32}
+.theme-country .aud-title{color:#2e7d32;letter-spacing:0.08em}
+.theme-country #audStatus{background:rgba(46,125,50,0.15);border-color:#2e7d32;color:#1b5e20}
+
+/* 9. Neon Tokyo 🏮 */
+.theme-neon #audApp{background:#0a0a0c;color:#00f2ff}
+.theme-neon .aud-tile{background:rgba(26,26,46,0.85);border:1px solid #ff00ff;color:#00f2ff;border-radius:10px;font-family:'Orbitron',sans-serif;box-shadow:0 0 15px rgba(255,0,255,0.25)}
+.theme-neon .aud-tile:hover{border-color:#00f2ff;transform:translateY(-3px);box-shadow:0 0 25px rgba(0,242,255,0.4)}
+.theme-neon .aud-tile.tile-open{border-color:#00f2ff;box-shadow:0 0 35px rgba(0,242,255,0.6)}
+.theme-neon .aud-tile.tile-gone{filter:blur(4px);transform:scale(0.8) rotate(-2deg);opacity:0.15}
+.theme-neon .aud-head{background:rgba(10,10,12,0.9);border-bottom:1px solid #ff00ff}
+.theme-neon .aud-title{color:#00f2ff;letter-spacing:0.1em;text-shadow:0 0 6px rgba(0,242,255,0.5)}
+.theme-neon #audStatus{background:rgba(255,0,255,0.15);border-color:#ff00ff;color:#00f2ff}
+
+/* 10. Vintage Vinyl 🎵 */
+.theme-vinyl #audApp{background:#121212;color:#ffd166;background-image:radial-gradient(circle, rgba(255,255,255,0.03) 1px, transparent 1px),radial-gradient(circle, rgba(255,255,255,0.02) 1px, transparent 1px);background-size:40px 40px,20px 20px}
+.theme-vinyl .aud-tile{background:rgba(30,30,30,0.8);border:2px solid #ff6b00;color:#ffd166;border-radius:6px;font-family:'Poppins',sans-serif;font-weight:800;box-shadow:0 6px 14px rgba(0,0,0,0.5)}
+.theme-vinyl .aud-tile:hover{border-color:#ffd166;transform:translateY(-2px)}
+.theme-vinyl .aud-tile.tile-open{border-color:#ffd166;box-shadow:0 0 20px rgba(255,209,102,0.3)}
+.theme-vinyl .aud-tile.tile-gone{filter:blur(4px);transform:scale(0.8) rotate(-3deg);opacity:0.2}
+.theme-vinyl .aud-head{background:#1a1a1a;border-bottom:2px solid #ff6b00}
+.theme-vinyl .aud-title{color:#ff6b00;letter-spacing:0.1em}
+.theme-vinyl #audStatus{background:rgba(255,107,0,0.15);border-color:#ff6b00;color:#ffd166}
+
+/* 11. Space Odyssey 🚀 */
+.theme-space #audApp{background:#0b0e17;color:#bfdbfe;background-image:radial-gradient(2px 2px at 20px 30px, #eee, rgba(0,0,0,0)),radial-gradient(2px 2px at 40px 70px, #fff, rgba(0,0,0,0)),radial-gradient(1px 1px at 90px 40px, #fff, rgba(0,0,0,0)),radial-gradient(2px 2px at 160px 120px, #ddd, rgba(0,0,0,0));background-repeat:repeat;background-size:200px 200px,150px 150px,100px 100px,250px 250px}
+.theme-space .aud-tile{background:rgba(21,31,58,0.8);border:1px solid #38bdf8;color:#bfdbfe;border-radius:12px;font-family:'Orbitron',sans-serif;box-shadow:0 0 12px rgba(56,189,248,0.15)}
+.theme-space .aud-tile:hover{border-color:#60a5fa;transform:translateY(-3px)}
+.theme-space .aud-tile.tile-open{border-color:#60a5fa;box-shadow:0 0 24px rgba(96,165,250,0.4)}
+.theme-space .aud-tile.tile-gone{filter:blur(4px);transform:scale(0.8) rotate(-4deg);opacity:0.15}
+.theme-space .aud-head{background:rgba(11,14,23,0.9);border-bottom:1px solid #38bdf8}
+.theme-space .aud-title{color:#38bdf8;letter-spacing:0.05em}
+.theme-space #audStatus{background:rgba(56,189,248,0.15);border-color:#38bdf8;color:#bfdbfe}
+
+/* 12. Ocean Deep 🌊 */
+.theme-ocean #audApp{background:#e0f7fa;color:#006064}
+.theme-ocean .aud-tile{background:rgba(178,235,242,0.8);border:2px solid #4dd0e1;color:#006064;border-radius:18px;font-family:'Poppins',sans-serif;box-shadow:0 6px 18px rgba(77,208,225,0.15)}
+.theme-ocean .aud-tile:hover{border-color:#00acc1;transform:translateY(-4px)}
+.theme-ocean .aud-tile.tile-open{border-color:#00acc1;box-shadow:0 0 26px rgba(0,172,193,0.35)}
+.theme-ocean .aud-tile.tile-gone{filter:blur(4px);transform:scale(0.8) rotate(-5deg)}
+.theme-ocean .aud-head{background:rgba(224,247,250,0.7);border-bottom:2px solid #4dd0e1}
+.theme-ocean .aud-title{color:#006064;font-weight:800}
+.theme-ocean #audStatus{background:rgba(77,208,225,0.15);border-color:#00acc1;color:#006064}
+
+/* 13. Fire & Ice 🔥❄️ */
+.theme-fireice #audApp{background:linear-gradient(135deg,#ff512f 0%,#dd2476 50%,#1c92d2 100%);background-size:200% 200%;animation:fireice 10s ease infinite;color:#fff}
+@keyframes fireice{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
+.theme-fireice .aud-tile{background:rgba(255,255,255,0.15);border:2px solid rgba(255,255,255,0.35);color:#fff;border-radius:14px;font-family:'Orbitron',sans-serif;box-shadow:0 0 15px rgba(255,255,255,0.1)}
+.theme-fireice .aud-tile:hover{border-color:#fff;transform:translateY(-3px)}
+.theme-fireice .aud-tile.tile-open{border-color:#fff;box-shadow:0 0 28px rgba(255,255,255,0.4)}
+.theme-fireice .aud-tile.tile-gone{filter:blur(4px);transform:scale(0.8) rotate(-4deg);opacity:0.2}
+.theme-fireice .aud-head{background:rgba(0,0,0,0.25);border-bottom:2px solid rgba(255,255,255,0.4)}
+.theme-fireice .aud-title{color:#fff;letter-spacing:0.1em}
+.theme-fireice #audStatus{background:rgba(255,255,255,0.2);border-color:#fff;color:#fff}
+
+/* 14. Minimal Black 🖤 */
+.theme-minimal #audApp{background:#000;color:#e5e5e5}
+.theme-minimal .aud-tile{background:#111;border:1px solid #333;color:#e5e5e5;border-radius:8px;font-family:'Poppins',sans-serif;font-weight:500;box-shadow:none}
+.theme-minimal .aud-tile:hover{border-color:#666;transform:translateY(-1px)}
+.theme-minimal .aud-tile.tile-open{border-color:#e5e5e5;box-shadow:0 0 12px rgba(255,255,255,0.08)}
+.theme-minimal .aud-tile.tile-gone{filter:blur(4px);transform:scale(0.8) rotate(-2deg);opacity:0.15}
+.theme-minimal .aud-head{background:#0a0a0a;border-bottom:1px solid #333}
+.theme-minimal .aud-title{color:#aaa;letter-spacing:0.05em;font-weight:500}
+.theme-minimal #audStatus{background:#1a1a1a;border-color:#444;color:#999}
+
+/* 15. Pop Art 🎭 */
+.theme-popart #audApp{background:#ffe000;color:#000}
+.theme-popart .aud-tile{background:#fff;border:5px solid #000;color:#ff0000;border-radius:0;font-family:'Permanent Marker',cursive,sans-serif;box-shadow:6px 6px 0 #000}
+.theme-popart .aud-tile:hover{border-color:#000;transform:translate(-2px,-2px)}
+.theme-popart .aud-tile.tile-open{border-color:#000;box-shadow:8px 8px 0 #ff0000}
+.theme-popart .aud-tile.tile-gone{filter:blur(4px);transform:scale(0.8) rotate(-2deg);opacity:0.2}
+.theme-popart .aud-head{background:#ffe000;border-bottom:6px solid #000}
+.theme-popart .aud-title{color:#000;font-family:'Permanent Marker',cursive,sans-serif;font-weight:900}
+.theme-popart #audStatus{background:#ff0000;border-color:#000;color:#fff;padding:2px 8px;border-radius:4px}
+
+/* 16. Forest Mood 🌲 */
+.theme-forest #audApp{background:#e8f5e9;color:#1b5e20}
+.theme-forest .aud-tile{background:rgba(208,240,192,0.7);border:2px solid #689f38;color:#2e7d32;border-radius:12px;font-family:'Playfair Display',serif;box-shadow:0 6px 16px rgba(104,159,56,0.18)}
+.theme-forest .aud-tile:hover{border-color:#33691e;transform:translateY(-4px)}
+.theme-forest .aud-tile.tile-open{border-color:#33691e;box-shadow:0 0 24px rgba(51,105,30,0.35)}
+.theme-forest .aud-tile.tile-gone{filter:blur(4px);transform:scale(0.8) rotate(-5deg)}
+.theme-forest .aud-head{background:rgba(232,245,233,0.7);border-bottom:2px solid #689f38}
+.theme-forest .aud-title{color:#1b5e20;font-family:'Playfair Display',serif}
+.theme-forest #audStatus{background:rgba(104,159,56,0.15);border-color:#33691e;color:#1b5e20}
+
+/* 17. Golden Hour ☀️ */
+.theme-golden #audApp{background:linear-gradient(180deg,#fff3e0 0%,#ffe0b2 100%);color:#e65100}
+.theme-golden .aud-tile{background:rgba(255,255,255,0.75);border:2px solid #fbc02d;color:#e65100;border-radius:18px;font-family:'Poppins',sans-serif;box-shadow:0 6px 18px rgba(251,192,45,0.2)}
+.theme-golden .aud-tile:hover{border-color:#f9a825;transform:translateY(-4px)}
+.theme-golden .aud-tile.tile-open{border-color:#f9a825;box-shadow:0 0 28px rgba(249,168,37,0.45)}
+.theme-golden .aud-tile.tile-gone{filter:blur(4px);transform:scale(0.8) rotate(-4deg)}
+.theme-golden .aud-head{background:rgba(255,243,224,0.7);border-bottom:2px solid #fbc02d}
+.theme-golden .aud-title{color:#e65100;font-weight:900}
+.theme-golden #audStatus{background:rgba(251,192,45,0.2);border-color:#f9a825;color:#e65100}
+
+/* 18. Cyber Grid 💾 */
+.theme-cybergrid #audApp{background:#000;color:#00ff41;background-image:linear-gradient(#00ff41 1px, transparent 1px),linear-gradient(90deg, #00ff41 1px, transparent 1px);background-size:40px 40px;background-opacity:0.1}
+.theme-cybergrid .aud-tile{background:rgba(0,20,0,0.6);border:1px solid #00ff41;color:#00ff41;border-radius:0;font-family:'Share Tech Mono',monospace;box-shadow:0 0 10px rgba(0,255,65,0.2)}
+.theme-cybergrid .aud-tile:hover{border-color:#00ff41;transform:translateY(-2px);box-shadow:0 0 20px rgba(0,255,65,0.4)}
+.theme-cybergrid .aud-tile.tile-open{border-color:#00ff41;box-shadow:0 0 30px rgba(0,255,65,0.6)}
+.theme-cybergrid .aud-tile.tile-gone{filter:blur(4px);transform:scale(0.8);opacity:0.15}
+.theme-cybergrid .aud-head{background:rgba(0,20,0,0.8);border-bottom:1px solid #00ff41}
+.theme-cybergrid .aud-title{color:#00ff41;font-family:'Share Tech Mono',monospace;letter-spacing:0.1em}
+.theme-cybergrid #audStatus{background:rgba(0,255,65,0.15);border-color:#00ff41;color:#00ff41}
+
+/* 19. Lavender Haze 💜 */
+.theme-lavender #audApp{background:#f3e5f5;color:#4a148c}
+.theme-lavender .aud-tile{background:rgba(225,190,231,0.65);border:2px solid #ce93d8;color:#6a1b9a;border-radius:20px;font-family:'Poppins',sans-serif;box-shadow:0 4px 14px rgba(206,147,216,0.18)}
+.theme-lavender .aud-tile:hover{border-color:#e1bee7;transform:translateY(-3px)}
+.theme-lavender .aud-tile.tile-open{border-color:#e1bee7;box-shadow:0 0 24px rgba(225,190,231,0.5)}
+.theme-lavender .aud-tile.tile-gone{filter:blur(4px);transform:scale(0.8) rotate(-5deg)}
+.theme-lavender .aud-head{background:rgba(243,229,245,0.7);border-bottom:2px solid #ce93d8}
+.theme-lavender .aud-title{color:#4a148c;font-weight:800}
+.theme-lavender #audStatus{background:rgba(206,147,216,0.15);border-color:#ce93d8;color:#6a1b9a}
+
+/* 20. Candy Crush 🍬 */
+.theme-candy #audApp{background:linear-gradient(135deg,#ff00cc 0%,#3333ff 100%);color:#fff}
+.theme-candy .aud-tile{background:rgba(255,255,255,0.2);border:3px solid #ffff00;color:#fff;border-radius:12px;font-family:'Permanent Marker',cursive,sans-serif;box-shadow:0 0 20px rgba(255,255,0,0.35)}
+.theme-candy .aud-tile:hover{border-color:#ff00ff;transform:translateY(-4px) scale(1.03)}
+.theme-candy .aud-tile.tile-open{border-color:#ff00ff;box-shadow:0 0 35px rgba(255,0,204,0.6)}
+.theme-candy .aud-tile.tile-gone{filter:blur(5px);transform:scale(0.8) rotate(-6deg);opacity:0.2}
+.theme-candy .aud-head{background:rgba(0,0,0,0.2);border-bottom:3px solid #ffff00}
+.theme-candy .aud-title{color:#ffff00;font-family:'Permanent Marker',cursive,sans-serif;font-weight:900}
+.theme-candy #audStatus{background:rgba(255,255,255,0.2);border-color:#ffff00;color:#ffff00}
+
+/* 21. Neon Game Show 📺 */
+.theme-gameshow #audApp{background:#1a0a2e;color:#fde68a}
+.theme-gameshow .aud-tile{background:rgba(42,10,78,0.8);border:3px solid #fbbf24;color:#fde68a;border-radius:8px;font-family:'Orbitron',sans-serif;font-weight:900;font-size:clamp(1.1rem,5vw,1.8rem);box-shadow:0 0 18px rgba(251,191,36,0.25)}
+.theme-gameshow .aud-tile:hover{border-color:#ff69b4;transform:translateY(-4px);box-shadow:0 0 30px rgba(255,105,180,0.4)}
+.theme-gameshow .aud-tile.tile-open{border-color:#ff69b4;box-shadow:0 0 40px rgba(255,105,180,0.7)}
+.theme-gameshow .aud-tile.tile-gone{filter:blur(6px);transform:scale(0.7);opacity:0.1;background:#0d051a;border-color:#33004d}
+.theme-gameshow .aud-head{background:rgba(26,10,46,0.9);border-bottom:3px solid #fbbf24}
+.theme-gameshow .aud-title{color:#fbbf24;letter-spacing:0.15em}
+.theme-gameshow #audStatus{background:rgba(255,191,36,0.2);border-color:#fbbf24;color:#fde68a}
+
+/* 22. Retro Arcade 🕹️ */
+.theme-arcade #audApp{background:#000;color:#00ffff;background-image:repeating-linear-gradient(0deg, transparent, transparent 2px, #00ffff 2px, #00ffff 4px),repeating-linear-gradient(90deg, transparent, transparent 2px, #00ffff 2px, #00ffff 4px);background-size:40px 40px;opacity:0.15}
+.theme-arcade .aud-tile{background:#0a0a0a;border:2px solid #ff00ff;color:#00ffff;border-radius:4px;font-family:'Permanent Marker',cursive,sans-serif;box-shadow:4px 4px 0 #ff00ff}
+.theme-arcade .aud-tile:hover{border-color:#00ffff;transform:translate(-2px,-2px);box-shadow:4px 4px 0 #00ffff}
+.theme-arcade .aud-tile.tile-open{border-color:#00ffff;box-shadow:6px 6px 0 #00ffff}
+.theme-arcade .aud-tile.tile-gone{color:transparent;filter:blur(4px);transform:scale(0.8);opacity:0.3}
+.theme-arcade .aud-tile.tile-gone::after{content:'CLEAR';position:absolute;inset:0;display:grid;place-items:center;color:#00ff00;font-family:'Permanent Marker',cursive,sans-serif;font-size:clamp(10px,3vw,16px);opacity:0.9}
+.theme-arcade .aud-head{background:#000;border-bottom:3px solid #00ffff}
+.theme-arcade .aud-title{color:#00ffff;font-family:'Permanent Marker',cursive,sans-serif}
+.theme-arcade #audStatus{background:rgba(0,255,255,0.15);border-color:#00ffff;color:#00ffff}
+
+/* 23. Minimal Modern 🍸 */
+.theme-modern #audApp{background:#18181b;color:#e4e4e7}
+.theme-modern .aud-tile{background:rgba(39,39,42,0.6);border:1px solid #3f3f46;color:#e4e4e7;border-radius:16px;font-family:'Poppins',sans-serif;font-weight:400;backdrop-filter:blur(8px);box-shadow:0 4px 20px rgba(0,0,0,0.3);transition:all 0.8s cubic-bezier(0.23,1,0.32,1)}
+.theme-modern .aud-tile:hover{border-color:#71717a;transform:translateY(-2px)}
+.theme-modern .aud-tile.tile-open{border-color:#a1a1aa;box-shadow:0 0 24px rgba(161,161,170,0.15)}
+.theme-modern .aud-tile.tile-gone{filter:blur(5px);transform:scale(0.85) rotate(-1deg);opacity:0.12}
+.theme-modern .aud-head{background:rgba(24,24,27,0.6);border-bottom:1px solid #3f3f46;backdrop-filter:blur(8px)}
+.theme-modern .aud-title{color:#a1a1aa;font-weight:400;letter-spacing:0.03em}
+.theme-modern #audStatus{background:rgba(63,63,70,0.4);border-color:#71717a;color:#a1a1aa}
+
+/* 24. Casino Cyberpunk 🎰 */
+.theme-casino #audApp{background:#000;color:#d4af37;background-image:radial-gradient(circle at 50% 50%, rgba(212,175,55,0.08) 0%, transparent 50%)}
+.theme-casino .aud-tile{background:rgba(17,17,17,0.8);border:2px solid #d4af37;color:#d4af37;border-radius:10px;font-family:'Orbitron',sans-serif;font-weight:900;box-shadow:0 0 20px rgba(212,175,55,0.15)}
+.theme-casino .aud-tile:hover{border-color:#06b6d4;transform:translateY(-4px);box-shadow:0 0 30px rgba(6,182,212,0.3)}
+.theme-casino .aud-tile.tile-open{border-color:#06b6d4;box-shadow:0 0 40px rgba(6,182,212,0.5);animation:slotReel 0.7s ease-out}
+@keyframes slotReel{0%{transform:scale(0.9) rotate(-3deg)}50%{transform:scale(1.05) rotate(3deg)}100%{transform:scale(1) rotate(0)}}
+.theme-casino .aud-tile.tile-gone{filter:blur(5px);transform:scale(0.8) rotate(-6deg);opacity:0.15;background:#0a0a0a;border-color:#330000}
+.theme-casino .aud-head{background:rgba(0,0,0,0.85);border-bottom:2px solid #d4af37}
+.theme-casino .aud-title{color:#d4af37;letter-spacing:0.2em;text-shadow:0 0 10px rgba(212,175,55,0.5)}
+.theme-casino #audStatus{background:rgba(212,175,55,0.2);border-color:#d4af37;color:#d4af37}
+
+/* 25. Mobile Native 📱 */
+.theme-native #audApp{background:#f2f2f7;color:#000000}
+.theme-native .aud-tile{background:#ffffff;border:1px solid #d1d1d6;color:#000000;border-radius:22px;font-family:'Poppins',sans-serif;font-weight:700;box-shadow:0 2px 8px rgba(0,0,0,0.08)}
+.theme-native .aud-tile:hover{border-color:#0a84ff;transform:translateY(-3px)}
+.theme-native .aud-tile.tile-open{border-color:#0a84ff;box-shadow:0 0 20px rgba(10,132,255,0.3)}
+.theme-native .aud-tile.tile-gone{filter:blur(4px);transform:scale(0.8) rotate(-4deg);opacity:0.15}
+.theme-native .aud-head{background:#f2f2f7;border-bottom:1px solid #d1d1d6}
+.theme-native .aud-title{color:#000000;font-weight:800}
+.theme-native #audStatus{background:#d1d1d6;border-color:#bcbcc0;color:#000000;font-weight:800}
+.theme-native #audBanner{height:4px;background:#d1d1d6;border-radius:2px;overflow:hidden;margin:0 1rem}
+.theme-native #audBanner::after{content:'';display:block;height:100%;background:#34c759;width:30%;animation:nativeProg 2s ease-in-out infinite}
+@keyframes nativeProg{0%,100%{transform:translateX(-100%)}50%{transform:translateX(200%)}}
+
+::-webkit-scrollbar{width:8px;height:8px}::-webkit-scrollbar-thumb{background:#2a223d;border-radius:4px}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-delay:0s!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}
 </style>
 </head>
 <body>
-<div class="blob b1"></div><div class="blob b2"></div>
+<div class="blob b1"></div><div class="blob b2"></div><div class="blob b3"></div><div id="sparks"></div>
 
-<!-- ================= VISTA CONDUTTORE ================= -->
+<!-- =================================================================
+     VISTA CONDUTTORE
+     ================================================================= -->
 <div id="hostApp" class="min-h-screen flex flex-col">
-  <div id="hostBanner" class="hidden banner"><span id="hostBannerTxt"></span><button class="font-bold" onclick="this.parentElement.classList.add('hidden')">✕</button></div>
+  <div id="hostBanner" class="hidden bg-amber-950/70 border-b border-amber-700/40 text-amber-200 text-[11px] px-4 py-2 flex items-start justify-between gap-3">
+    <span id="hostBannerTxt"></span>
+    <button class="font-bold" onclick="this.parentElement.classList.add('hidden')">✕</button>
+  </div>
+
   <header class="glass sticky top-0 z-30 px-3 py-2.5 shadow-xl">
     <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-2">
       <div class="flex items-center gap-2">
-        <div class="logo px-3 py-1.5 rounded-xl font-serif font-black text-sm sm:text-base tracking-wider">⚡ JEOPARDY!</div>
-        <span id="syncBadge" class="badge">● Sync…</span>
+        <div class="logo px-3 py-1.5 rounded-xl font-heading font-black text-base sm:text-lg tracking-wider">⚠️ ERM, ACTUALLY!</div>
+        <span id="syncBadge" class="text-[11px] font-bold px-2.5 py-1 rounded-full border border-slate-700 bg-slate-900">● Sync…</span>
       </div>
-      <div class="flex flex-wrap gap-1.5">
-        <button class="btn" onclick="openQR()">📱<span class="hidden sm:inline"> QR</span></button>
-        <button class="btn" onclick="openEditor()">✏️<span class="hidden sm:inline"> Editor</span></button>
-        <button class="btn" onclick="openM('rulesModal')">📖<span class="hidden sm:inline"> Regole</span></button>
-        <button class="btn" onclick="showFinal()">🏁<span class="hidden sm:inline"> Classifica</span></button>
+      <div class="flex gap-1.5">
+        <button class="btn" title="QR concorrenti" onclick="openQR()">📱<span class="hidden sm:inline"> QR</span></button>
+        <button class="btn" title="Editor" onclick="openEditor()">✏️<span class="hidden sm:inline"> Editor</span></button>
+        <button class="btn" title="Spareggio" onclick="openSudden()">⚔️<span class="hidden sm:inline"> Spareggio</span></button>
+        <button class="btn" title="Fine partita" onclick="showFinal()">🏁<span class="hidden sm:inline"> Fine</span></button>
         <button class="btn" id="soundBtn" onclick="toggleSound()">🔊</button>
         <button class="btn btn-red" title="Nuova partita" onclick="resetGame()">🔄</button>
       </div>
     </div>
   </header>
 
+  <!-- Schermata di benvenuto (nessun mazzo) -->
   <section id="welcome" class="hidden flex-grow flex items-center justify-center p-4">
-    <div class="glass rounded-3xl p-6 sm:p-8 max-w-lg w-full space-y-5 text-center">
-      <div class="text-6xl">⚡</div>
-      <h1 class="font-serif font-black text-3xl gold">Benvenuto, conduttore!</h1>
-      <p class="text-sm muted">Non c'è ancora nessun mazzo. Il mazzo (domande e risposte) resta solo su questo dispositivo: ai telefoni arrivano solo le domande che apri.</p>
+    <div class="glass rounded-3xl p-6 sm:p-8 max-w-lg w-full space-y-5 text-center pop-in">
+      <div class="text-5xl">🎤</div>
+      <h1 class="font-heading font-black text-2xl text-amber-400">Benvenuto, conduttore!</h1>
+      <p class="text-sm text-slate-300">Non c'è ancora nessun mazzo su questo dispositivo. Il mazzo (domande e soluzioni) resta solo qui e non viene mai pubblicato né inviato ai concorrenti.</p>
       <div class="grid gap-3">
-        <button class="btn btn-gold !py-3" onclick="loadDemo()">🎲 Carica mazzo demo</button>
-        <label class="btn text-center cursor-pointer !py-3">📂 Importa mazzo (.json)<input type="file" accept=".json,application/json" class="hidden" onchange="importFile(this)"></label>
+        <label class="btn btn-amber text-center cursor-pointer !py-3">📂 Importa mazzo (.json)<input type="file" accept=".json,application/json" class="hidden" onchange="importFile(this)"></label>
         <button class="btn !py-3" onclick="$('pasteBox').classList.toggle('hidden')">📋 Incolla JSON</button>
         <div id="pasteBox" class="hidden space-y-2">
           <textarea id="pasteArea" rows="6" class="inp font-mono text-[11px]" placeholder="Incolla qui il JSON del mazzo…"></textarea>
           <button class="btn btn-green w-full" onclick="applyImport($('pasteArea').value)">Importa</button>
         </div>
-        <button class="btn btn-blue !py-3" onclick="createEmptyDeck()">✨ Crea nuovo mazzo</button>
+        <button class="btn btn-purple !py-3" onclick="createEmptyDeck()">✨ Crea nuovo mazzo</button>
+        <a class="btn text-center !py-3" href="mazzo-esempio.json" download="mazzo-esempio.json">⬇️ Scarica un mazzo di esempio</a>
       </div>
+      <p class="text-[11px] text-slate-500">Il mazzo di esempio è un file separato (<code>mazzo-esempio.json</code>): scaricalo e poi importalo.</p>
     </div>
   </section>
 
-  <main id="hostMain" class="hidden max-w-7xl mx-auto w-full p-3 sm:p-6 flex-grow grid grid-cols-1 lg:grid-cols-[330px_minmax(0,1fr)] gap-6">
+  <main id="hostMain" class="hidden max-w-7xl mx-auto w-full p-3 sm:p-6 flex-grow grid grid-cols-1 lg:grid-cols-[320px_minmax(0,1fr)] gap-6">
+    <!-- Pannello squadre (drawer su mobile) -->
     <aside id="sidePanel" class="space-y-4 order-2 lg:order-1">
-      <div class="lg:hidden flex justify-between items-center"><b class="font-serif gold">🏆 Squadre</b><button class="btn" onclick="toggleDrawer(false)">✕</button></div>
+      <div class="lg:hidden flex justify-between items-center">
+        <b class="font-heading text-amber-400">🏆 Squadre</b><button class="btn" onclick="toggleDrawer(false)">✕</button>
+      </div>
       <div class="glass rounded-2xl p-4">
-        <div class="flex items-center justify-between mb-3 pb-3 border-b border-white/10">
-          <h2 class="font-serif font-bold gold hidden lg:block">🏆 Squadre</h2>
-          <button class="btn btn-blue" onclick="addPlayer()">+ Squadra</button>
+        <div class="flex items-center justify-between mb-3 pb-3 border-b border-purple-900/40">
+          <h2 class="font-heading font-bold text-amber-400 hidden lg:block">🏆 Concorrenti</h2>
+          <button class="btn btn-purple" onclick="addPlayer()">+ Giocatore</button>
         </div>
-        <div id="playersList" class="space-y-2 max-h-[50vh] overflow-y-auto pr-1"></div>
-        <div class="mt-4 p-3 rounded-xl box text-center">
-          <span class="small muted block">Sceglie la prossima tessera</span>
-          <span id="activeName" class="font-bold gold"></span>
+        <div id="playersList" class="space-y-2 max-h-[55vh] overflow-y-auto pr-1"></div>
+        <div class="mt-4 p-3 rounded-xl bg-purple-950/40 border border-purple-800/50 text-center">
+          <span class="block text-[10px] uppercase font-bold tracking-wider text-gray-400">Sceglie la tessera</span>
+          <span id="activeName" class="font-bold text-amber-400"></span>
         </div>
       </div>
       <div class="glass rounded-2xl p-4 space-y-3 text-sm">
-        <h3 class="small gold">⚙️ Impostazioni</h3>
-        <label class="flex items-center gap-2"><input type="checkbox" class="check" id="optScores" onchange="setOpt('showScores',this.checked)"> Mostra punteggi sui telefoni</label>
-        <label class="flex items-center gap-2"><input type="checkbox" class="check" id="optPenalty" onchange="setOpt('penalty',this.checked)"> Penalità per risposta sbagliata</label>
-        <label class="flex items-center justify-between gap-2">Secondi buzzer<input type="number" id="optBuzz" class="inp !w-20" min="3" max="30" onchange="setNum('buzzSecs',this.value,3,30)"></label>
-        <label class="flex items-center justify-between gap-2">Secondi risposta<input type="number" id="optAns" class="inp !w-20" min="3" max="60" onchange="setNum('ansSecs',this.value,3,60)"></label>
+        <h3 class="font-bold text-amber-400 uppercase tracking-wider text-[11px]">⚙️ Impostazioni</h3>
+        <label class="flex items-center gap-2"><input type="checkbox" id="optJokers" onchange="setOpt('jokersOn',this.checked)"> Joker casuali sulle tessere</label>
+        <label class="flex items-center gap-2"><input type="checkbox" id="optScores" onchange="setOpt('showScores',this.checked)"> Mostra punteggi sui telefoni</label>
+      </div>
+      <div class="glass rounded-2xl p-4 text-[11px] text-slate-400 space-y-1">
+        <h3 class="font-bold text-amber-400 uppercase tracking-wider">📖 Regole lampo</h3>
+        <ul class="list-disc pl-4 space-y-1">
+          <li>Ogni tessera ha <b>3 errori</b> nascosti.</li>
+          <li>Chi urla <b>"Erm, actually!"</b> blocca la lettura.</li>
+          <li>Ogni errore vale il <b>valore pieno</b> della tessera.</li>
+          <li>Correzione sbagliata o inventata = <b>− valore pieno</b>.</li>
+          <li>Chi azzecca per primo sceglie la tessera successiva.</li>
+        </ul>
       </div>
     </aside>
+
     <section class="space-y-5 pb-24 lg:pb-0 min-w-0 order-1 lg:order-2">
-      <div class="overflow-x-auto pb-2"><div id="gameBoard" class="grid gap-3"></div></div>
-      <div id="fjBox" class="hidden glass rounded-2xl p-4 border-2 border-yellow-400/40 flex flex-col sm:flex-row items-center justify-between gap-3">
-        <div class="text-center sm:text-left"><div class="small gold">Sfida finale</div><h3 class="font-serif font-black text-xl">FINAL JEOPARDY</h3></div>
-        <button class="btn btn-gold !py-3 !px-6" onclick="openFJ()">⚡ <span id="fjBtnTxt">Final Jeopardy</span></button>
+      <div class="overflow-x-auto pb-2"><div id="gameBoard" class="grid gap-2 sm:gap-4"></div></div>
+      <div id="showdownBox" class="hidden glass rounded-2xl p-4 border-2 border-amber-500/40 flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div class="text-center sm:text-left">
+          <div class="inline-block px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 text-xs font-bold border border-amber-500/40">🔥 SFIDA FINALE</div>
+          <h3 class="text-xl font-heading font-extrabold">ERM, ACTUALLY! SHOWDOWN</h3>
+        </div>
+        <button id="showdownBtn" onclick="openCard('showdown')" class="w-full sm:w-auto px-6 py-4 rounded-xl font-heading font-black text-slate-950 bg-gradient-to-r from-amber-400 to-amber-500 shadow-lg active:scale-95 transition">⚡ <span id="showdownPts">1000</span> PUNTI</button>
       </div>
     </section>
   </main>
-  <button id="drawerBtn" class="hidden lg:hidden fixed bottom-3 left-1/2 -translate-x-1/2 z-30 btn btn-gold !px-6 !py-3 rounded-full" onclick="toggleDrawer(true)">🏆 Squadre</button>
+
+  <button id="drawerBtn" class="lg:hidden fixed bottom-3 left-1/2 -translate-x-1/2 z-30 btn btn-amber !px-6 !py-3 rounded-full" onclick="toggleDrawer(true)">🏆 Squadre</button>
 </div>
 
-<!-- ================= VISTA CONCORRENTI ================= -->
+<!-- =================================================================
+     VISTA CONCORRENTI
+     ================================================================= -->
 <div id="audApp" class="hidden min-h-screen flex flex-col">
-  <header class="glass px-4 py-3 flex items-center justify-between sticky top-0 z-30 gap-2">
-    <div class="flex items-center gap-2 min-w-0">
-      <div class="logo px-2.5 py-1 rounded-lg font-serif font-black tracking-wider text-xs">⚡ JEOPARDY!</div>
-      <span id="audTeam" class="font-bold text-sm truncate gold"></span>
-    </div>
-    <div class="flex items-center gap-2"><span id="audScore" class="hidden"></span><span id="audStatus" class="badge">● …</span></div>
-  </header>
-
-  <div id="joinScreen" class="fixed inset-0 z-40 flex items-center justify-center p-4 jp-overlay">
-    <div class="glass rounded-3xl p-7 max-w-sm w-full text-center space-y-4">
-      <div class="text-5xl">⚡</div>
-      <h2 class="font-serif font-black text-2xl gold">Entra in gioco</h2>
-      <p class="text-sm muted">Scrivi il nome della tua squadra.</p>
-      <input id="joinName" type="text" maxlength="24" placeholder="Nome squadra" class="inp text-center" onkeydown="if(event.key==='Enter')joinNow()">
-      <button id="joinBtn" class="btn btn-gold w-full !py-3" onclick="joinNow()">Entra</button>
+  <!-- Schermata ingresso nome -->
+  <div id="joinScreen" class="flex-1 flex flex-col items-center justify-center text-center p-4 bg-black/90 z-40">
+    <div class="glass rounded-3xl p-8 max-w-sm w-full pop-in">
+      <div class="text-4xl mb-4">👋</div>
+      <h2 class="font-heading font-bold text-2xl text-amber-400 mb-2">Entra in gioco</h2>
+      <p class="text-slate-300 text-sm mb-6">Inserisci il tuo nome per partecipare al quiz.</p>
+      <input id="joinName" type="text" placeholder="Il tuo nome" class="inp w-full mb-4" maxlength="30">
+      <button id="joinBtn" class="btn btn-amber w-full !py-3">Entra in gioco</button>
     </div>
   </div>
 
-  <main class="flex-1 p-4 flex flex-col gap-4 w-full max-w-2xl mx-auto">
-    <div id="audWait" class="text-center muted mt-16 space-y-3">
-      <div class="text-5xl spin">⏳</div>
-      <p class="font-serif font-bold text-lg gold">In attesa del conduttore…</p>
+  <header class="glass px-4 py-3 flex items-center justify-between sticky top-0 z-30">
+    <div class="logo px-3 py-1 rounded-lg font-heading font-black tracking-wider">⚠️ ERM, ACTUALLY!</div>
+    <div class="flex items-center gap-2">
+      <div id="myScore" class="hidden bg-amber-950/20 border border-amber-500/40 text-amber-400 px-3 py-1 rounded-full text-xs font-bold backdrop-blur">💰 0</div>
+      <span id="audStatus" class="text-[11px] font-bold px-2.5 py-1 rounded-full border border-slate-700 bg-slate-900">● …</span>
     </div>
-    <div id="audBoard" class="hidden"></div>
-
-    <div id="audPlay" class="hidden flex flex-col items-center gap-4 text-center">
-      <div id="audCat" class="gold font-serif font-bold text-lg tracking-wide uppercase"></div>
-      <div id="audPts" class="font-serif font-black text-3xl"></div>
-      <div id="audQuestion" class="font-serif font-semibold text-2xl sm:text-3xl leading-relaxed px-2"></div>
-      <div id="audTimer" class="timer"></div>
-      <div id="audBuzzWrap" class="w-full flex flex-col items-center gap-3">
-        <button id="buzzBtn" class="buzz-big waiting" onclick="triggerBuzz()">ATTENDI…</button>
-      </div>
-      <div id="audMsg" class="font-serif font-bold text-xl"></div>
-      <div id="audAnswer" class="hidden box w-full"></div>
+  </header>
+  <div id="audBanner" class="px-3 pt-3"></div>
+  <main class="flex-1 p-3 flex flex-col gap-4">
+    <div id="audWait" class="text-center text-slate-300 mt-16 space-y-3">
+      <div class="text-4xl spin">⏳</div><p class="font-heading font-bold text-lg">In attesa del conduttore…</p>
+      <p class="text-xs text-slate-500">Il tabellone comparirà qui in automatico.</p>
     </div>
-
-    <div id="audFJ" class="hidden space-y-4"></div>
-    <div id="audScores" class="hidden"></div>
+    <div id="audBoard" class="hidden flex gap-2 sm:gap-3 justify-center"></div>
+    <div id="audShow" class="hidden aud-tile !border-amber-500/60 !text-lg"></div>
+    <div id="audDone" class="hidden text-center mt-10 space-y-2 banner-in"><div class="text-5xl">🎉</div><p class="font-heading font-black text-2xl text-amber-400">Tutte le tessere sono state giocate!</p></div>
+    <div id="audScores"></div>
     <div id="audFinal" class="hidden text-center space-y-6 mt-4"></div>
   </main>
-  <button class="fixed bottom-4 right-4 z-30 btn btn-gold !rounded-full" onclick="openM('rulesModal')">📖</button>
+
+  <!-- Pulsante selettore temi -->
+  <div id="themeBtnWrap" class="fixed bottom-4 right-4 z-50">
+    <button id="themeBtn" class="btn btn-amber rounded-full !px-4 !py-3 shadow-2xl hover:shadow-amber-500/60 transition-all" onclick="openThemeModal()" title="Scegli tema">🎨</button>
+  </div>
+
+  <!-- MODALE TEMI -->
+  <div id="themeModal" class="modal">
+    <div class="pop glass w-full max-w-md max-h-[90vh] rounded-3xl flex flex-col overflow-hidden border border-white/10">
+      <div class="px-5 py-4 border-b border-white/10 flex items-center justify-between">
+        <h3 class="font-heading font-bold text-amber-400">🎨 Scegli Tema</h3>
+        <button class="btn" onclick="closeM('themeModal')">✕</button>
+      </div>
+      <div class="p-4 overflow-y-auto max-h-[70vh] space-y-3" id="themeList">
+        <!-- popolato da JS -->
+      </div>
+      <div class="px-5 py-3 border-t border-white/10 bg-black/20 text-center">
+        <p class="text-[10px] text-slate-500">Il tema viene salvato sul tuo dispositivo.</p>
+      </div>
+    </div>
+  </div>
 </div>
 
-<!-- ================= MODALE TESSERA (HOST) ================= -->
+<!-- =================================================================
+     MODALE TESSERA
+     ================================================================= -->
 <div id="cardModal" class="modal">
-  <div class="pop glass w-full max-w-3xl max-h-[94vh] rounded-3xl flex flex-col overflow-hidden">
-    <div class="px-4 py-3 border-b border-white/10 bg-black/20 flex items-center justify-between">
+  <div class="pop glass w-full max-w-4xl max-h-[96vh] rounded-3xl flex flex-col overflow-hidden">
+    <div class="px-4 py-3 border-b border-purple-900/50 bg-purple-950/50 flex items-center justify-between">
       <div class="flex items-center gap-2 flex-wrap">
-        <span id="mCat" class="px-3 py-1 rounded-lg text-xs font-bold uppercase bg-black/40 gold border border-yellow-400/40"></span>
-        <span id="mPts" class="px-3 py-1 rounded-lg text-xs font-black gold border border-yellow-400/40"></span>
+        <span id="mCat" class="px-3 py-1 rounded-lg text-xs font-bold uppercase bg-purple-900/60 text-purple-300 border border-purple-700/50"></span>
+        <span id="mPts" class="px-3 py-1 rounded-lg text-xs font-black bg-amber-500/20 text-amber-400 border border-amber-500/40"></span>
       </div>
       <button class="btn" onclick="closeCard()">✕</button>
     </div>
-    <div class="p-4 sm:p-5 overflow-y-auto flex-grow space-y-4">
-      <div id="mBet" class="hidden box space-y-3">
-        <h5 class="small gold">💰 Daily Double — puntata</h5>
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <div><label class="text-[11px] muted">Squadra che risponde</label><select id="betTeam" class="inp" onchange="updBetHint()"></select></div>
-          <div><label class="text-[11px] muted">Puntata</label><input id="betInput" type="number" inputmode="numeric" class="inp text-center font-serif font-bold gold"></div>
+    <div class="p-4 sm:p-5 overflow-y-auto space-y-5 flex-grow">
+      <div id="mJoker" class="hidden"></div>
+
+      <div class="flex flex-col sm:flex-row items-center justify-between gap-4 p-4 rounded-2xl bg-purple-950/30 border border-purple-800/40">
+        <div class="flex items-center gap-3 flex-wrap justify-center">
+          <div id="buzzWrap"><button id="buzzBtn" class="buzz" onclick="triggerBuzz()">📣 ERM, ACTUALLY!</button></div>
+          <span id="buzzStatus" class="hidden text-xs font-bold text-amber-300 bg-amber-950/80 px-3 py-1.5 rounded-lg border border-amber-700/50">🚨 INTERROTTO!</span>
+          <button id="buzzRelease" class="hidden btn" onclick="releaseBuzz()">↩ Riprendi lettura</button>
         </div>
-        <p id="betHint" class="text-xs muted"></p>
-        <button class="btn btn-gold" onclick="confirmBet()">Conferma puntata e mostra domanda</button>
+        <div class="flex items-center gap-3">
+          <div id="timerBox" class="relative w-20 h-20">
+            <svg viewBox="0 0 100 100" class="w-20 h-20 -rotate-90">
+              <circle cx="50" cy="50" r="42" stroke="#1e293b" stroke-width="9" fill="none"/>
+              <circle id="ring" cx="50" cy="50" r="42" stroke="#fbbf24" stroke-width="9" fill="none" stroke-linecap="round" stroke-dasharray="264" stroke-dashoffset="0"/>
+            </svg>
+            <span id="timerDisplay" class="absolute inset-0 flex items-center justify-center font-heading font-black text-2xl text-amber-400">10</span>
+          </div>
+          <div class="flex flex-col gap-1.5">
+            <button id="timerBtn" class="btn" onclick="toggleTimer()">▶</button>
+            <button class="btn" onclick="resetTimer()">⟲</button>
+          </div>
+        </div>
       </div>
-      <div id="mQwrap"><div class="card-question" id="mQuestion"></div></div>
-      <div class="ans-host"><div class="small muted">Risposta (solo conduttore)</div><div id="mAnswer"></div></div>
-      <div id="mCtl" class="space-y-3"></div>
+
+      <div class="space-y-2">
+        <div class="text-xs font-bold text-slate-400 uppercase tracking-wider">🎤 Testo da leggere <span class="text-purple-300 normal-case italic font-normal">— le parti gialle sono gli errori</span></div>
+        <div id="mText" class="p-4 sm:p-5 rounded-2xl bg-slate-900/90 border border-purple-900/40 text-lg leading-loose shadow-inner"></div>
+      </div>
+
+      <div id="mTrap" class="hidden">
+        <div class="p-3.5 rounded-xl bg-amber-950/40 border border-amber-600/40 text-amber-200 text-xs flex gap-2">
+          <span>⚠️</span><div><b id="mTrapType" class="text-amber-300"></b><div id="mTrapNote"></div></div>
+        </div>
+      </div>
+
+      <div class="space-y-3">
+        <div class="flex items-center justify-between">
+          <h4 class="font-heading font-bold text-amber-400">✅ I 3 errori nascosti</h4>
+          <button class="btn" onclick="revealAll()">Rivela tutti</button>
+        </div>
+        <div id="mErrors" class="space-y-2.5"></div>
+      </div>
+
+      <div class="p-4 rounded-2xl bg-slate-900/80 border border-slate-800 space-y-3">
+        <h5 class="text-xs font-bold text-slate-400 uppercase tracking-wider">Assegna o rimuovi punti</h5>
+        <select id="assignSel" class="inp"></select>
+        <div class="grid grid-cols-2 gap-3">
+          <button class="btn btn-green !min-h-[56px]" onclick="award(1)">+ Punti Interi<br><span id="pFull" class="opacity-80">valore tessera</span></button>
+          <button class="btn btn-red !min-h-[56px]" onclick="award(-1)">− Punti Interi<br><span id="pNeg" class="opacity-80">valore tessera</span></button>
+        </div>
+        <div class="flex gap-2"><input id="manualPts" type="number" inputmode="numeric" class="inp" placeholder="Punti manuali (± numero)"><button class="btn" onclick="awardManual()">Applica</button></div>
+      </div>
     </div>
-    <div class="px-4 py-3 border-t border-white/10 bg-black/20 flex justify-end"><button class="btn" onclick="closeCard()">Chiudi senza completare</button></div>
+    <div class="px-4 py-3 border-t border-purple-900/50 bg-purple-950/40 flex items-center justify-between gap-2">
+      <button id="doneBtn" class="btn btn-amber" onclick="toggleCompleted()"></button>
+      <button class="btn btn-purple" onclick="closeCard()">Chiudi</button>
+    </div>
   </div>
 </div>
 
-<!-- ================= MODALE FINAL JEOPARDY (HOST) ================= -->
-<div id="fjModal" class="modal">
-  <div class="pop glass w-full max-w-3xl max-h-[94vh] rounded-3xl flex flex-col overflow-hidden">
-    <div class="px-4 py-3 border-b border-white/10 bg-black/20 flex items-center justify-between">
-      <h3 class="font-serif font-bold gold">⚡ FINAL JEOPARDY</h3><button class="btn" onclick="closeM('fjModal')">✕</button>
-    </div>
-    <div id="fjBody" class="p-4 sm:p-5 overflow-y-auto space-y-4"></div>
-  </div>
-</div>
-
-<!-- ================= MODALE QR ================= -->
+<!-- =================================================================
+     MODALE QR (schermo intero)
+     ================================================================= -->
 <div id="qrModal" class="modal full">
   <div class="pop glass overflow-y-auto">
     <div class="max-w-lg mx-auto p-5 space-y-5 text-center">
-      <div class="flex justify-between items-center"><h3 class="font-serif font-black gold text-xl">📱 Inquadra per giocare</h3><button class="btn" onclick="closeM('qrModal')">✕</button></div>
+      <div class="flex justify-between items-center">
+        <h3 class="font-heading font-black text-amber-400 text-xl">📱 Inquadra per giocare</h3>
+        <button class="btn" onclick="closeM('qrModal')">✕</button>
+      </div>
       <div id="qrBox" class="mx-auto bg-white p-3 rounded-2xl inline-flex items-center justify-center text-slate-700 text-sm" style="min-width:200px;min-height:200px"></div>
-      <div id="qrCount" class="text-sm gold font-bold"></div>
-      <div id="qrWarn" class="hidden text-xs gold box text-left"></div>
-      <div class="space-y-2 text-left"><label class="text-[11px] muted">Link per i concorrenti:</label>
-        <div class="flex gap-2"><input id="qrUrl" class="inp" readonly><button class="btn" onclick="copyAudUrl()">📋</button><button class="btn" id="shareBtn" onclick="shareAudUrl()">↗️</button></div></div>
-      <div class="space-y-2 text-left"><label class="text-[11px] muted">URL pubblico di questa pagina (GitHub Pages) — si incolla una volta sola:</label>
-        <div class="flex gap-2"><input id="pubUrl" class="inp" placeholder="https://nome.github.io/jeopardy/"><button class="btn btn-blue" onclick="savePubUrl()">Salva</button></div></div>
-      <button class="btn btn-gold w-full !py-3" onclick="closeM('qrModal')">▶ Inizia a giocare</button>
+      <div id="qrCount" class="text-sm text-emerald-400 font-bold"></div>
+      <div id="qrWarn" class="hidden text-xs text-amber-300 bg-amber-950/50 border border-amber-700/40 rounded-xl p-3 text-left"></div>
+      <div class="space-y-2 text-left">
+        <label class="text-[11px] text-slate-400">Link per i concorrenti:</label>
+        <div class="flex gap-2"><input id="qrUrl" class="inp" readonly><button class="btn" onclick="copyAudUrl()">📋</button><button class="btn" id="shareBtn" onclick="shareAudUrl()">↗️</button></div>
+      </div>
+      <div class="space-y-2 text-left">
+        <label class="text-[11px] text-slate-400">URL pubblico di questa pagina (GitHub Pages, ecc.) — si incolla una volta sola:</label>
+        <div class="flex gap-2"><input id="pubUrl" class="inp" placeholder="https://nome.github.io/erm/"><button class="btn btn-purple" onclick="savePubUrl()">Salva</button></div>
+      </div>
+      <button class="btn btn-amber w-full !py-3 text-base" onclick="closeM('qrModal')">▶ Inizia a giocare</button>
     </div>
   </div>
 </div>
 
-<!-- ================= MODALE EDITOR ================= -->
+<!-- =================================================================
+     MODALE EDITOR
+     ================================================================= -->
 <div id="editorModal" class="modal">
-  <div class="pop glass w-full max-w-4xl max-h-[94vh] rounded-3xl flex flex-col overflow-hidden">
-    <div class="px-4 py-3 border-b border-white/10 bg-black/20 flex items-center justify-between flex-wrap gap-2">
-      <div id="edTabs" class="flex gap-2 flex-wrap"></div><button class="btn" onclick="closeM('editorModal')">✕</button>
+  <div class="pop glass w-full max-w-5xl max-h-[96vh] rounded-3xl flex flex-col overflow-hidden">
+    <div class="px-4 py-3 border-b border-purple-900/50 bg-purple-950/50 flex items-center justify-between flex-wrap gap-2">
+      <div id="edTabs" class="flex gap-2 flex-wrap"></div>
+      <button class="btn" onclick="closeM('editorModal')">✕</button>
     </div>
     <div id="edBody" class="p-4 sm:p-5 overflow-y-auto flex-grow space-y-4"></div>
-    <div class="px-4 py-3 border-t border-white/10 bg-black/20 flex justify-end"><button class="btn btn-gold !py-3" onclick="finishEdit()">✅ Fine → Mostra QR</button></div>
+    <div class="px-4 py-3 border-t border-purple-900/50 bg-purple-950/40 flex justify-end">
+      <button class="btn btn-amber !py-3" onclick="finishEdit()">✅ Fine modifiche → Genera QR</button>
+    </div>
   </div>
 </div>
 
-<!-- ================= MODALE FINALE ================= -->
+<!-- MODALE SPAREGGIO -->
+<div id="sdModal" class="modal">
+  <div class="pop glass w-full max-w-3xl max-h-[96vh] rounded-3xl flex flex-col overflow-hidden">
+    <div class="px-4 py-3 border-b border-purple-900/50 bg-purple-950/50 flex items-center justify-between">
+      <h3 class="font-heading font-bold text-amber-400">⚔️ Sudden Death Arena</h3>
+      <button class="btn" onclick="closeSudden()">✕</button>
+    </div>
+    <div id="sdBody" class="p-4 sm:p-5 overflow-y-auto space-y-4"></div>
+  </div>
+</div>
+
+<!-- MODALE FINALE -->
 <div id="finalModal" class="modal">
-  <div class="pop glass w-full max-w-3xl max-h-[94vh] rounded-3xl flex flex-col overflow-hidden">
-    <div class="px-4 py-3 border-b border-white/10 bg-black/20 flex items-center justify-between">
-      <h3 class="font-serif font-bold gold">🏆 Classifica finale</h3><button class="btn" onclick="closeFinal()">↩ Torna al tabellone</button>
+  <div class="pop glass w-full max-w-3xl max-h-[96vh] rounded-3xl flex flex-col overflow-hidden">
+    <div class="px-4 py-3 border-b border-purple-900/50 bg-purple-950/50 flex items-center justify-between">
+      <h3 class="font-heading font-bold text-amber-400">🏆 Classifica finale</h3>
+      <button class="btn" onclick="closeFinal()">↩ Torna al tabellone</button>
     </div>
     <div id="finalBody" class="p-4 sm:p-5 overflow-y-auto space-y-6"></div>
-  </div>
-</div>
-
-<!-- ================= MODALE REGOLE ================= -->
-<div id="rulesModal" class="modal">
-  <div class="pop glass w-full max-w-2xl max-h-[92vh] rounded-3xl flex flex-col overflow-hidden">
-    <div class="px-4 py-3 border-b border-white/10 bg-black/20 flex items-center justify-between">
-      <h3 class="font-serif font-bold gold">📖 Regole di Jeopardy!</h3><button class="btn" onclick="closeM('rulesModal')">✕</button>
-    </div>
-    <div class="p-5 overflow-y-auto space-y-4 text-sm leading-relaxed">
-      <div><h4 class="font-serif font-bold gold text-lg">🎯 Obiettivo</h4><p>Totalizza più punti di tutti. Il tabellone ha categorie e tessere con un valore: più è alto, più è difficile.</p></div>
-      <div><h4 class="font-serif font-bold gold text-lg">🧩 Il turno</h4><p>La squadra che ha il controllo sceglie una categoria e un valore. Il conduttore legge la domanda: <b>i buzzer restano bloccati</b> finché non finisce e li apre.</p></div>
-      <div><h4 class="font-serif font-bold gold text-lg">🔔 Buzzer</h4><p>Appena il buzzer si apre, il <b>primo telefono che preme</b> risponde a voce. Risposta giusta: guadagni il valore della tessera e <b>prendi il controllo</b>. Risposta sbagliata: perdi il valore (se la penalità è attiva), sei eliminato per quella domanda e il buzzer si riapre per gli altri. Se nessuno prenota entro il tempo, si rivela la risposta.</p></div>
-      <div><h4 class="font-serif font-bold gold text-lg">💰 Daily Double</h4><p>Alcune tessere nascondono un Daily Double: risponde <b>solo</b> la squadra che l'ha scelta, senza buzzer. Puntata libera da 5 fino al suo punteggio (o al valore più alto del tabellone, se più alto). Giusta: +puntata. Sbagliata: −puntata.</p></div>
-      <div><h4 class="font-serif font-bold gold text-lg">⚡ Final Jeopardy</h4><p>Alla fine, si gioca solo con punteggio <b>maggiore di zero</b>. Viene mostrata la categoria: ogni squadra fa una <b>puntata segreta</b> dal telefono (da 0 al proprio punteggio). Poi si svela l'indizio: 30 secondi per scrivere la risposta. Il conduttore giudica: chi ha ragione guadagna la puntata, chi sbaglia la perde.</p></div>
-      <div><h4 class="font-serif font-bold gold text-lg">🏆 Vittoria</h4><p>Vince chi ha il punteggio più alto alla fine. (Nel gioco originale le risposte vanno formulate come domande: qui è facoltativo!)</p></div>
-    </div>
   </div>
 </div>
 
@@ -308,76 +694,91 @@ body{font-family:'Poppins',sans-serif;background:var(--blue);color:var(--paper);
 /* =====================================================================
    1. COSTANTI & UTILITY
    ===================================================================== */
-const NS='jeopardy2';
-const K={deck:'jp2_deck',game:'jp2_game',set:'jp2_set',room:'jp2_room',dev:'jp2_dev',name:'jp2_name'};
-const BROKERS=['wss://broker.emqx.io:8084/mqtt','wss://broker.hivemq.com:8884/mqtt','wss://mqtt.eclipseprojects.io/mqtt'];
-const FJ_SECS=30;
+const DECK_KEY='erm_deck_v3', GAME_KEY='erm_game_v3', SET_KEY='erm_settings_v3', PEER_KEY='erm_peer_id_v3';
+const BROKERS=[
+  'wss://broker.emqx.io:8084/mqtt',
+  'wss://broker.hivemq.com:8884/mqtt',
+  'wss://mqtt.eclipseprojects.io/mqtt'
+];
+const TRAPS={none:'Nessuna trappola',bait:'Esca: affermazione VERA che sembra falsa',debate:'Dibattito / zona grigia',nitpick:'Pignoleria accettabile'};
+const JOKERS={
+  double:{name:'Double or Nothing',icon:'🎲',desc:'Il prossimo punteggio assegnato (positivo o negativo) vale ×2!'},
+  steal:{name:'Steal Points',icon:'🦹',desc:'I prossimi punti guadagnati vengono sottratti al leader.'},
+  bomb:{name:'Time Bomb',icon:'💣',desc:'Il timer del silenzio è di soli 5 secondi!'}
+};
+const LEGACY_ICONS={clapperboard:'🎬','gamepad-2':'🎮',atom:'🔬',globe:'🌐'};
 const $=id=>document.getElementById(id);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const uid=()=>'x'+Math.random().toString(36).slice(2,9);
-const nid=()=>Date.now()*1000+Math.floor(Math.random()*1000);
+const fmtBold=s=>esc(s).replace(/\*\*(.+?)\*\*/g,'<strong class="text-amber-300">$1</strong>');
+const highlight=s=>{let n=0;return esc(s).replace(/\*(.+?)\*/g,(m,a)=>`<span class="wrong-highlight" data-i="${n++}">${a}</span>`)};
 const load=k=>{try{return JSON.parse(localStorage.getItem(k))}catch{return null}};
 const store=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch(e){console.warn('localStorage',e)}};
+const shuffle=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a};
 const vib=p=>{try{navigator.vibrate&&navigator.vibrate(p)}catch{}};
-function toast(m){const t=$('toast');t.textContent=m;t.classList.add('show');clearTimeout(toast.t);toast.t=setTimeout(()=>t.classList.remove('show'),2600)}
+function toast(m){const t=$('toast');t.textContent=m;t.classList.add('show');clearTimeout(toast.t);toast.t=setTimeout(()=>t.classList.remove('show'),2400)}
 function openM(id){const m=$(id);m.classList.remove('closing');m.classList.add('open');playSound('open')}
-function closeM(id,cb){const m=$(id);if(!m.classList.contains('open')){cb&&cb();return}m.classList.add('closing');setTimeout(()=>{m.classList.remove('open','closing');cb&&cb()},200);playSound('close')}
+function closeM(id,cb){const m=$(id);if(!m.classList.contains('open'))return;m.classList.add('closing');setTimeout(()=>{m.classList.remove('open','closing');cb&&cb()},200);playSound('close')}
+function initSparks(){const c=$('sparks');for(let i=0;i<22;i++){const s=document.createElement('i');s.className='spark';s.style.left=Math.random()*100+'vw';s.style.top=(30+Math.random()*70)+'vh';s.style.animationDuration=(5+Math.random()*7)+'s';s.style.animationDelay=(-Math.random()*8)+'s';c.appendChild(s)}}
 
 /* =====================================================================
-   2. AUDIO
+   2. AUDIO (Web Audio API)
    ===================================================================== */
 let audioCtx=null;
-function initAudio(){const A_=window.AudioContext||window.webkitAudioContext;if(!audioCtx&&A_)audioCtx=new A_();if(audioCtx&&audioCtx.state==='suspended')audioCtx.resume()}
+function initAudio(){const A=window.AudioContext||window.webkitAudioContext;if(!audioCtx&&A)audioCtx=new A();if(audioCtx&&audioCtx.state==='suspended')audioCtx.resume()}
 function tone(f,t0,d,type='sine',v=.2){const o=audioCtx.createOscillator(),g=audioCtx.createGain();o.type=type;o.frequency.setValueAtTime(f,t0);g.gain.setValueAtTime(v,t0);g.gain.exponentialRampToValueAtTime(.001,t0+d);o.connect(g);g.connect(audioCtx.destination);o.start(t0);o.stop(t0+d+.02)}
-function playSound(t){
+function playSound(t,p){
   if(typeof settings==='undefined'||!settings.sound)return;
   try{initAudio();if(!audioCtx)return;const n=audioCtx.currentTime;
     switch(t){
-      case 'buzz':tone(220,n,.3,'sawtooth',.3);tone(165,n+.05,.3,'square',.15);break;
-      case 'correct':[523,659,784,1046].forEach((f,i)=>tone(f,n+i*.1,.25,'sine',.2));break;
-      case 'wrong':tone(180,n,.2,'square',.2);tone(110,n+.15,.3,'square',.2);break;
-      case 'tick':tone(800,n,.05,'triangle',.08);break;
-      case 'dd':[392,523,659,784,1046,1318].forEach((f,i)=>tone(f,n+i*.09,.2,'triangle',.2));break;
+      case 'buzz':tone(160,n,.45,'sawtooth',.3);tone(110,n+.05,.4,'square',.12);break;
+      case 'correct':[523,659,784].forEach((f,i)=>tone(f,n+i*.1,.25,'sine',.2));break;
+      case 'wrong':tone(180,n,.2,'square',.2);tone(110,n+.18,.28,'square',.2);break;
+      case 'tick':tone(700+(p||0)*70,n,.06,'triangle',.09);break;
+      case 'joker':[392,523,659,784,1046].forEach((f,i)=>tone(f,n+i*.08,.2,'triangle',.2));break;
       case 'win':[523,659,784,1046,784,1046,1318].forEach((f,i)=>tone(f,n+i*.13,.3,'sine',.22));break;
       case 'open':tone(330,n,.12,'sine',.1);tone(495,n+.07,.14,'sine',.1);break;
       case 'close':tone(495,n,.1,'sine',.08);tone(330,n+.07,.12,'sine',.08);break;
     }
   }catch(e){}
 }
-function toggleSound(){settings.sound=!settings.sound;store(K.set,settings);$('soundBtn').textContent=settings.sound?'🔊':'🔇'}
+function toggleSound(){settings.sound=!settings.sound;store(SET_KEY,settings);$('soundBtn').textContent=settings.sound?'🔊':'🔇'}
 
 /* =====================================================================
    3. STATO
    ===================================================================== */
-const newGame=()=>({players:[],activeId:null,completed:{},ended:false,fj:null});
-let deck=load(K.deck);
-let game=Object.assign(newGame(),load(K.game)||{});
-game.players=(game.players||[]).filter(p=>p&&typeof p.id==='number');
-game.ended=false;
-let settings=Object.assign({sound:true,showScores:true,penalty:true,buzzSecs:8,ansSecs:10,publicUrl:''},load(K.set)||{});
-let cur=null,tickInt=null,lastSec=-1;
-const pl=id=>game.players.find(p=>p.id===id);
-const saveDeck=()=>store(K.deck,deck), saveGame=()=>store(K.game,game);
-const allCards=()=>deck?deck.categories.flatMap(c=>c.cards):[];
-const maxTile=()=>Math.max(100,...allCards().map(c=>c.points));
-const needDeck=()=>{if(!deck){toast('Prima importa o crea un mazzo');return false}return true};
-function findCard(id){if(!deck)return null;for(const c of deck.categories){const k=c.cards.find(x=>x.id===id);if(k)return{card:k,cat:c}}return null}
-function purgeOrphans(){const ids=new Set(allCards().map(c=>c.id));Object.keys(game.completed).forEach(id=>{if(!ids.has(id))delete game.completed[id]})}
+const newGame=()=>({players:[{id:1,name:'Squadra Alfa',score:0,found:0,wrong:0},{id:2,name:'Squadra Beta',score:0,found:0,wrong:0}],activeId:1,completed:{},solved:{},jokers:{},ended:false});
+let deck=load(DECK_KEY);
+let game=load(GAME_KEY)||newGame();
+let settings=Object.assign({sound:true,showScores:false,jokersOn:true,publicUrl:''},load(SET_KEY)||{});
+game.players.forEach((p,i)=>{
+  p.found=p.found||0;p.wrong=p.wrong||0;
+  if(typeof p.id!=='number'){
+    const old=p.id;p.id=Date.now()+i+Math.floor(Math.random()*999);
+    if(game.activeId===old)game.activeId=p.id;
+  }
+});
+let cur=null,timerInt=null,timerLeft=10,flipId=null,lastSolved=-1;
+const shown={};let tweenRAF=null;
+const saveDeck=()=>store(DECK_KEY,deck), saveGame=()=>store(GAME_KEY,game);
 function commit(){saveGame();renderPlayers();renderBoard();broadcast()}
-function setOpt(k,v){settings[k]=v;store(K.set,settings);broadcast()}
-function setNum(k,v,mn,mx){settings[k]=Math.min(mx,Math.max(mn,parseInt(v,10)||mn));store(K.set,settings);renderSettings()}
-function renderSettings(){
-  $('optScores').checked=settings.showScores;$('optPenalty').checked=settings.penalty;
-  $('optBuzz').value=settings.buzzSecs;$('optAns').value=settings.ansSecs;
+function findCard(id){
+  if(!deck)return null;
+  if(id==='showdown')return deck.showdown?{card:deck.showdown,cat:{title:'Showdown Finale'}}:null;
+  for(const c of deck.categories){const k=c.cards.find(x=>x.id===id);if(k)return{card:k,cat:c}}
+  return null;
 }
+const allCards=()=>deck?deck.categories.flatMap(c=>c.cards).concat(deck.showdown?[deck.showdown]:[]):[];
+function purgeOrphans(){const ids=new Set(allCards().map(c=>c.id));['completed','solved','jokers'].forEach(k=>Object.keys(game[k]).forEach(id=>{if(!ids.has(id))delete game[k][id]}))}
+function setOpt(k,v){settings[k]=v;store(SET_KEY,settings);broadcast()}
 function renderAll(){
   const has=!!deck;
   $('welcome').classList.toggle('hidden',has);$('hostMain').classList.toggle('hidden',!has);
   $('drawerBtn').classList.toggle('hidden',!has);
   $('soundBtn').textContent=settings.sound?'🔊':'🔇';
-  renderSettings();
   if(has){renderBoard();renderPlayers()}
 }
+const needDeck=()=>{if(!deck){toast('Prima importa o crea un mazzo');return false}return true};
 
 /* =====================================================================
    4. RENDER CONDUTTORE
@@ -385,247 +786,267 @@ function renderAll(){
 function renderBoard(){
   if(!deck)return;
   const cats=deck.categories,el=$('gameBoard');
-  el.style.gridTemplateColumns=`repeat(${Math.max(cats.length,1)},minmax(96px,1fr))`;
+  el.style.gridTemplateColumns=`repeat(${Math.max(cats.length,1)},minmax(88px,1fr))`;
   el.innerHTML=cats.map(c=>{
     const tiles=c.cards.slice().sort((a,b)=>a.points-b.points).map(k=>{
       const done=!!game.completed[k.id];
-      return `<button class="tile ${done?'tile-done':''} ${k.dailyDouble?'tile-dd':''}" data-id="${esc(k.id)}" onclick="tileClick(this.dataset.id)">${k.points}</button>`;
+      return `<button class="tile ${done?'tile-done':''} ${flipId===k.id?'tile-flip':''}" data-id="${esc(k.id)}" onclick="openCard(this.dataset.id)">${k.points}</button>`;
     }).join('');
-    return `<div class="flex flex-col gap-3"><div class="cat-head"><div class="text-2xl">${esc(c.emoji||'📋')}</div><h3>${esc(c.title)}</h3></div>${tiles}</div>`;
-  }).join('')||'<p class="muted text-sm">Nessuna categoria: creala dall\'Editor.</p>';
-  $('fjBox').classList.toggle('hidden',!deck.final);
-  $('fjBtnTxt').textContent=game.fj?'Riprendi Final Jeopardy':'Final Jeopardy';
+    return `<div class="space-y-2.5 flex flex-col"><div class="glass p-2.5 rounded-xl text-center"><div class="text-xl">${esc(c.emoji)}</div><h3 class="font-heading font-bold text-[11px] uppercase tracking-wider">${esc(c.title)}</h3></div>${tiles}</div>`;
+  }).join('')||'<p class="text-slate-400 text-sm">Nessuna categoria: creala dall\'Editor.</p>';
+  flipId=null;
+  const sh=deck.showdown;$('showdownBox').classList.toggle('hidden',!sh);
+  if(sh){$('showdownPts').textContent=sh.points;$('showdownBtn').style.opacity=game.completed.showdown?.35:1}
+  $('optJokers').checked=settings.jokersOn;$('optScores').checked=settings.showScores;
+}
+function fillSelect(){
+  const sel=$('assignSel');if(!sel)return;const prev=sel.value;
+  sel.innerHTML=game.players.map(p=>`<option value="${p.id}">${esc(p.name)} (${p.score} pt)</option>`).join('');
+  sel.value=game.players.some(p=>String(p.id)===prev)?prev:String(game.activeId);
 }
 function renderPlayers(){
+  const old={};document.querySelectorAll('[data-row]').forEach(e=>old[e.dataset.row]=e.getBoundingClientRect().top);
   const list=game.players.slice().sort((a,b)=>b.score-a.score);
   const top=Math.max(...game.players.map(p=>p.score),1);
   $('playersList').innerHTML=list.map(p=>{
     const act=p.id===game.activeId;
-    return `<div data-row="${p.id}" class="row ${act?'!border-yellow-400':''}" style="justify-content:space-between">
-      <div class="flex items-center gap-2 overflow-hidden min-w-0">
-        <button onclick="setActive(${p.id})" title="Ha il controllo">${act?'🟡':'⚪'}</button>
-        <span class="font-bold text-sm truncate cursor-pointer" onclick="renamePlayer(${p.id})">${p.score===top&&p.score>0?'👑 ':''}${esc(p.name)}${p.dv?' 📱':''}</span>
+    if(shown[p.id]===undefined)shown[p.id]=p.score;
+    return `<div data-row="${p.id}" class="p-2.5 rounded-xl border ${act?'bg-purple-900/40 border-amber-400/80':'bg-slate-900/60 border-slate-800'} flex items-center justify-between gap-2">
+      <div class="flex items-center gap-2 overflow-hidden">
+        <button onclick="setActive(${p.id})" title="Imposta come attivo">${act?'🟡':'⚪'}</button>
+        <span class="font-bold text-sm truncate cursor-pointer" onclick="renamePlayer(${p.id})">${p.score===top&&p.score>0?'<span class="crown">👑</span> ':''}${esc(p.name)}</span>
       </div>
-      <div class="flex items-center gap-1 flex-shrink-0">
-        <span class="font-serif font-black text-lg gold min-w-[2.4rem] text-right">${p.score}</span>
-        <button class="btn !px-2 !min-h-[34px]" onclick="adjust(${p.id},100)">+100</button>
-        <button class="btn !px-2 !min-h-[34px]" onclick="adjust(${p.id},-100)">−100</button>
-        <button class="btn !px-2 !min-h-[34px]" onclick="removePlayer(${p.id})">🗑</button>
+      <div class="flex items-center gap-1">
+        <span data-sc="${p.id}" class="font-heading font-extrabold text-lg text-amber-400 cursor-pointer min-w-[2.2rem] text-right" onclick="setScore(${p.id})">${shown[p.id]}</span>
+        <button class="btn !px-2" onclick="adjust(${p.id},50)">+50</button>
+        <button class="btn !px-2" onclick="adjust(${p.id},-50)">−50</button>
+        <button class="btn !px-2" onclick="removePlayer(${p.id})">🗑</button>
       </div></div>`;
-  }).join('')||'<p class="text-xs muted italic text-center">Nessuna squadra: aggiungila o fai entrare i telefoni (QR).</p>';
-  const a=pl(game.activeId);$('activeName').textContent=a?a.name:'—';
+  }).join('')||'<p class="text-xs text-slate-500 italic text-center">Nessun giocatore</p>';
+  document.querySelectorAll('[data-row]').forEach(e=>{
+    const o=old[e.dataset.row];if(o==null)return;const d=o-e.getBoundingClientRect().top;
+    if(d){e.style.transition='none';e.style.transform=`translateY(${d}px)`;requestAnimationFrame(()=>requestAnimationFrame(()=>{e.style.transition='transform .45s cubic-bezier(.2,.9,.3,1)';e.style.transform=''}))}
+  });
+  const a=game.players.find(p=>p.id===game.activeId);$('activeName').textContent=a?a.name:'—';
+  fillSelect();tweenScores();
 }
-function toggleDrawer(o){$('sidePanel').classList.toggle('open',o)}
-function addPlayer(){const n=prompt('Nome squadra:','Squadra '+(game.players.length+1));if(!n||!n.trim())return;const id=nid();game.players.push({id,name:n.trim().slice(0,24),score:0,dv:null});if(!pl(game.activeId))game.activeId=id;commit()}
-function removePlayer(id){if(!confirm('Rimuovere questa squadra?'))return;const p=pl(id);game.players=game.players.filter(x=>x.id!==id);if(game.activeId===id)game.activeId=game.players[0]?.id??null;commit()}
-function renamePlayer(id){const p=pl(id);const n=prompt('Nuovo nome:',p.name);if(n&&n.trim()){p.name=n.trim().slice(0,24);commit()}}
-function setActive(id){game.activeId=id;commit()}
-function adjust(id,amt){const p=pl(id);if(!p)return;p.score+=amt;floatPts(id,amt);playSound(amt>=0?'correct':'wrong');commit()}
+function tweenScores(){
+  if(tweenRAF)return;
+  const step=()=>{let busy=false;
+    game.players.forEach(p=>{
+      let s=shown[p.id]??p.score;
+      if(s!==p.score){const d=p.score-s,st=Math.sign(d)*Math.max(1,Math.ceil(Math.abs(d)*.12));s=Math.abs(d)<=Math.abs(st)?p.score:s+st;busy=true}
+      shown[p.id]=s;const el=document.querySelector(`[data-sc="${p.id}"]`);if(el)el.textContent=s;
+    });
+    tweenRAF=busy?requestAnimationFrame(step):null;
+  };
+  tweenRAF=requestAnimationFrame(step);
+}
 function floatPts(pid,amt){
-  if(!amt)return;
-  const p=pl(pid);let x=innerWidth/2,y=innerHeight*.35,label=' · '+(p?p.name:'');
+  const p=game.players.find(x=>x.id===pid);let x=innerWidth/2,y=innerHeight*.35,label='';
   const row=document.querySelector(`[data-row="${pid}"]`),modalOpen=document.querySelector('.modal.open');
-  if(row&&!modalOpen){const r=row.getBoundingClientRect();if(r.top>60&&r.bottom<innerHeight){x=r.left+r.width/2;y=r.top;label=''}}
+  if(row&&!modalOpen){const r=row.getBoundingClientRect();if(r.width&&r.top>60&&r.bottom<innerHeight){x=r.left+r.width/2;y=r.top}else label=' · '+(p?p.name:'')}
+  else label=' · '+(p?p.name:'');
   const el=document.createElement('div');el.className='float-pts '+(amt>=0?'pos':'neg');
   el.textContent=(amt>=0?'+':'−')+Math.abs(amt)+label;el.style.left=x+'px';el.style.top=y+'px';
   document.body.appendChild(el);setTimeout(()=>el.remove(),1400);
 }
+function toggleDrawer(o){$('sidePanel').classList.toggle('open',o)}
+function addPlayer(){if(!needDeck())return;const n=prompt('Nome del giocatore o squadra:','Giocatore '+(game.players.length+1));if(!n||!n.trim())return;const id=Date.now()+Math.floor(Math.random()*999);game.players.push({id,name:n.trim().slice(0,30),score:0,found:0,wrong:0});if(!game.players.some(p=>p.id===game.activeId))game.activeId=id;commit()}
+function removePlayer(id){if(!confirm('Rimuovere questo giocatore?'))return;game.players=game.players.filter(p=>p.id!==id);delete shown[id];if(game.activeId===id)game.activeId=game.players[0]?.id??null;commit()}
+function renamePlayer(id){const p=game.players.find(x=>x.id===id);const n=prompt('Nuovo nome:',p.name);if(n&&n.trim()){p.name=n.trim().slice(0,30);commit()}}
+function setScore(id){const p=game.players.find(x=>x.id===id);const v=prompt('Imposta punteggio:',p.score);if(v===null)return;const n=parseInt(v,10);if(!isNaN(n)){p.score=n;commit()}}
+function setActive(id){game.activeId=id;commit()}
+function adjust(id,amt){const p=game.players.find(x=>x.id===id);if(!p)return;p.score+=amt;floatPts(id,amt);playSound(amt>=0?'correct':'wrong');commit()}
 
 /* =====================================================================
-   5. TESSERA (HOST)
-   Fasi: bet (solo DD) → read → open → answer → reveal
+   5. MODALE TESSERA
    ===================================================================== */
-function tileClick(id){
-  if(game.completed[id]){if(confirm('Riattivare questa tessera?')){delete game.completed[id];commit()}return}
-  openCard(id);
+function wrapWords(root){
+  const tw=document.createTreeWalker(root,NodeFilter.SHOW_TEXT),nodes=[];while(tw.nextNode())nodes.push(tw.currentNode);
+  const total=nodes.reduce((a,n)=>a+(n.nodeValue.match(/\S+/g)||[]).length,0),step=Math.min(45,1400/Math.max(total,1));let i=0;
+  nodes.forEach(n=>{const f=document.createDocumentFragment();
+    n.nodeValue.split(/(\s+)/).forEach(p=>{if(!p)return;if(/^\s+$/.test(p))f.appendChild(document.createTextNode(p));else{const s=document.createElement('span');s.className='w';s.style.animationDelay=(i++*step)+'ms';s.textContent=p;f.appendChild(s)}});
+    n.parentNode.replaceChild(f,n)});
 }
 function openCard(id){
-  const f=findCard(id);if(!f)return;
-  if(!game.players.length)return toast('Aggiungi almeno una squadra (o fai entrare i telefoni)');
-  initAudio();
-  const dd=!!f.card.dailyDouble;
-  cur={id,card:f.card,cat:f.cat.title,phase:dd?'bet':'read',order:[],out:[],answering:null,dd,ddPid:null,bet:0,result:null,rp:null,endAt:0};
-  renderCard();
-  if(dd){fillBet();playSound('dd')}
-  openM('cardModal');broadcast();startTick();
-}
-const cardValue=()=>cur.dd?cur.bet:cur.card.points;
-function fillBet(){
-  const sel=$('betTeam');
-  sel.innerHTML=game.players.map(p=>`<option value="${p.id}">${esc(p.name)} (${p.score})</option>`).join('');
-  sel.value=String(pl(game.activeId)?game.activeId:game.players[0].id);
-  $('betInput').value='';updBetHint();
-}
-function updBetHint(){
-  const p=pl(parseInt($('betTeam').value,10));if(!p)return;
-  $('betHint').textContent=`Puntata valida: da 5 a ${Math.max(p.score,maxTile())} (il suo punteggio o il valore più alto del tabellone).`;
-}
-function confirmBet(){
-  const p=pl(parseInt($('betTeam').value,10));if(!p)return;
-  const v=parseInt($('betInput').value,10),mx=Math.max(p.score,maxTile());
-  if(isNaN(v)||v<5||v>mx)return toast(`Puntata non valida (5–${mx})`);
-  cur.ddPid=p.id;cur.bet=v;cur.phase='answer';cur.answering=p.id;cur.endAt=Date.now()+settings.ansSecs*1000;
-  game.activeId=p.id;playSound('open');renderCard();commit();
-}
-function renderCard(){
-  if(!cur)return;
-  const k=cur.card,bet=cur.phase==='bet';
-  $('mCat').innerHTML=esc(cur.cat)+(cur.dd?' <span class="badge-dd">DAILY DOUBLE</span>':'');
-  $('mPts').textContent=cur.dd&&cur.bet?`Puntata ${cur.bet}`:k.points+' punti';
-  $('mBet').classList.toggle('hidden',!bet);
-  $('mQwrap').classList.toggle('hidden',bet);
-  $('mQuestion').textContent=k.question;
-  $('mAnswer').textContent=k.answer;
-  $('mCtl').innerHTML=ctlHtml();
-  tickUpdate();
-}
-function ctlHtml(){
-  const c=cur,v=cardValue();
-  const nm=id=>{const p=pl(id);return p?esc(p.name):'?'};
-  if(c.phase==='bet')return '';
-  if(c.phase==='read')return `<div class="flex flex-wrap gap-2"><button class="btn btn-gold !py-3" onclick="openBuzz()">🔔 Apri buzzer (${settings.buzzSecs}s)</button><button class="btn" onclick="noOne()">⏭ Nessuno risponde</button></div><p class="muted text-xs">Leggi la domanda ad alta voce, poi apri il buzzer. Finché non lo apri, i telefoni restano bloccati.</p>`;
-  if(c.phase==='open'){
-    const btns=game.players.filter(p=>!c.out.includes(p.id)).map(p=>`<button class="btn" onclick="hostBuzz(${p.id})">🔔 ${esc(p.name)}</button>`).join('');
-    return `<div id="tmBox" class="timer"></div><p class="muted text-xs">Buzzer aperto: vince il primo telefono che preme. Per le squadre senza telefono usa questi pulsanti:</p><div class="flex flex-wrap gap-2">${btns}</div><button class="btn" onclick="noOne()">⏭ Nessuno risponde</button>`;
+  const f=findCard(id);if(!f)return;initAudio();
+  cur={id,card:f.card,catTitle:f.cat.title,mult:false,steal:false,buzzed:false,revealed:[false,false,false],timerStart:10,freshJoker:false};
+  let j=game.jokers[id];
+  if(!j&&settings.jokersOn&&id!=='showdown'&&!game.completed[id]&&Math.random()<0.25){
+    j={type:shuffle(Object.keys(JOKERS))[0],used:false};game.jokers[id]=j;saveGame();cur.freshJoker=true;
   }
-  if(c.phase==='answer'){
-    const pen=(c.dd||settings.penalty)?v:0;
-    return `<div class="flex items-center justify-between flex-wrap gap-2"><div class="font-serif text-xl">🎤 Risponde: <b class="gold">${nm(c.answering)}</b></div><div id="tmBox" class="timer"></div></div>
-      <div class="flex gap-2"><button class="btn btn-green flex-1 !py-3" onclick="markRight()">✓ Giusta (+${v})</button><button class="btn btn-red flex-1 !py-3" onclick="markWrong()">✗ Sbagliata (−${pen})</button></div>
-      ${c.dd?'':'<button class="btn" onclick="unbuzz()">↩ Annulla prenotazione (riapri buzzer)</button>'}`;
-  }
-  let r='';
-  if(c.result==='right')r=`✅ <b class="gold">${nm(c.rp)}</b> risponde correttamente`;
-  else if(c.result==='wrong')r=`❌ <b class="gold">${nm(c.rp)}</b> sbaglia`;
-  else r='⏰ Nessuno ha risposto';
-  return `<div class="box text-center font-serif text-xl">${r}</div><button class="btn btn-gold w-full !py-3" onclick="finishCard()">✓ Completa e chiudi tessera</button>`;
+  if(j&&!j.used){if(j.type==='double')cur.mult=true;if(j.type==='steal')cur.steal=true;if(j.type==='bomb')cur.timerStart=5}
+  renderCardModal();openM('cardModal');
+  if(cur.freshJoker)setTimeout(()=>playSound('joker'),250);
+  broadcast();
 }
-function openBuzz(){
-  if(!cur)return;cur.phase='open';cur.order=[];cur.answering=null;cur.endAt=Date.now()+settings.buzzSecs*1000;
-  lastSec=-1;playSound('open');renderCard();broadcast();
+function renderCardModal(){
+  const k=cur.card;
+  $('mCat').textContent=cur.catTitle;$('mPts').textContent=k.points+' Punti';
+  const mt=$('mText');mt.innerHTML=highlight(k.text);wrapWords(mt);
+  if(k.trapType!=='none'||k.trapNote){$('mTrap').classList.remove('hidden');$('mTrapType').textContent='Nota per il conduttore · '+(TRAPS[k.trapType]||'');$('mTrapNote').textContent=k.trapNote||''}
+  else $('mTrap').classList.add('hidden');
+  $('pFull').textContent='+'+k.points;$('pNeg').textContent='−'+k.points;
+  const j=game.jokers[cur.id],jb=$('mJoker');
+  if(j&&!j.used){
+    const J=JOKERS[j.type];let sp='';
+    if(cur.freshJoker)for(let i=0;i<10;i++)sp+=`<span class="sp" style="left:${Math.random()*100}%;top:${Math.random()*80}%;animation-delay:${.5+Math.random()*.6}s">✨</span>`;
+    jb.classList.remove('hidden');
+    jb.innerHTML=`<div class="joker-stage"><div class="joker-card ${cur.freshJoker?'draw':''}"><span class="text-4xl">${J.icon}</span><div><div class="font-heading font-black text-pink-300 uppercase text-sm">🃏 JOKER: ${J.name}</div><div class="text-xs text-pink-100">${J.desc}</div></div></div>${sp}</div>`;
+    cur.freshJoker=false;
+  }else jb.classList.add('hidden');
+  updateBuzzUI();resetTimer();renderErrors();updateDoneUI();updateMultUI();fillSelect();
 }
-function noOne(){if(!cur)return;cur.phase='reveal';cur.result='none';cur.rp=null;renderCard();broadcast()}
-function unbuzz(){if(!cur||cur.phase!=='answer'||cur.dd)return;openBuzz()}
-function hostBuzz(pid){registerBuzz(pid)}
-function registerBuzz(pid){
-  if(!cur||cur.phase!=='open')return;
-  if(cur.out.includes(pid)||!pl(pid))return;
-  cur.answering=pid;cur.phase='answer';cur.endAt=Date.now()+settings.ansSecs*1000;lastSec=-1;
-  playSound('buzz');vib([80,40,80]);toast('🔔 '+pl(pid).name+'!');
-  renderCard();broadcast();
+function renderErrors(){
+  const sv=game.solved[cur.id]||[false,false,false];
+  $('mErrors').innerHTML=cur.card.solutions.map((s,i)=>{
+    const rev=cur.revealed[i],ok=!!sv[i];
+    return `<div class="p-3.5 rounded-xl border ${lastSolved===i?'pop-in':''} ${ok?'bg-emerald-950/40 border-emerald-600/60':rev?'bg-purple-950/60 border-purple-500/50':'bg-slate-900/60 border-slate-800'}">
+      <div class="flex items-start justify-between gap-3">
+        <div class="space-y-1 min-w-0">
+          <span class="text-[10px] font-bold uppercase tracking-wider ${rev?'text-amber-400':'text-slate-500'}">Errore ${i+1} ${ok?'· ✓ Corretto':''}</span>
+          ${rev?`<p class="text-sm"><span class="line-through opacity-60">${esc(s.err)}</span> → ${fmtBold(s.corr)}</p>`:`<p class="text-sm text-slate-500 italic">Nascosto</p>`}
+        </div>
+        <div class="flex flex-col sm:flex-row gap-2 flex-shrink-0">
+          <button class="btn" onclick="toggleReveal(${i})">${rev?'Nascondi':'Rivela'}</button>
+          <button class="btn ${ok?'btn-green':''}" onclick="toggleSolved(${i})">${ok?'✓ Corretto':'Segna corretto'}</button>
+        </div></div></div>`;
+  }).join('');
+  lastSolved=-1;
 }
-function markRight(){
-  if(!cur||cur.phase!=='answer')return;const p=pl(cur.answering);if(!p)return;
-  const v=cardValue();p.score+=v;game.activeId=p.id;
-  cur.phase='reveal';cur.result='right';cur.rp=p.id;
-  floatPts(p.id,v);playSound('correct');vib([100,50,100]);renderCard();commit();
+function flashErr(i){const e=document.querySelector(`#mText [data-i="${i}"]`);if(e){e.classList.remove('flash');void e.offsetWidth;e.classList.add('flash')}}
+function toggleReveal(i){cur.revealed[i]=!cur.revealed[i];playSound('tick');if(cur.revealed[i])flashErr(i);renderErrors()}
+function revealAll(){cur.revealed=[true,true,true];playSound('tick');[0,1,2].forEach(i=>setTimeout(()=>flashErr(i),i*250));renderErrors()}
+function toggleSolved(i){
+  const a=game.solved[cur.id]||(game.solved[cur.id]=[false,false,false]);
+  a[i]=!a[i];saveGame();playSound(a[i]?'correct':'tick');if(a[i]){lastSolved=i;vib(30)}renderErrors();
 }
-function markWrong(){
-  if(!cur||cur.phase!=='answer')return;const p=pl(cur.answering);if(!p)return;
-  const v=cardValue(),pen=(cur.dd||settings.penalty)?v:0;
-  p.score-=pen;cur.out.push(p.id);floatPts(p.id,-pen);playSound('wrong');vib([200,100,200]);
-  const left=game.players.filter(x=>!cur.out.includes(x.id));
-  if(cur.dd||!left.length){cur.phase='reveal';cur.result='wrong';cur.rp=p.id}
-  else{cur.phase='open';cur.order=[];cur.answering=null;cur.endAt=Date.now()+settings.buzzSecs*1000;lastSec=-1}
-  renderCard();commit();
+function closeCard(){stopTimer();cur=null;broadcast();closeM('cardModal')}
+function updateDoneUI(){$('doneBtn').textContent=game.completed[cur.id]?'↩ Riattiva tessera':'✓ Completa e chiudi'}
+function toggleCompleted(){
+  const id=cur.id;
+  if(game.completed[id]){delete game.completed[id];commit();updateDoneUI();return}
+  game.completed[id]=true;flipId=id;commit();closeCard();
+  setTimeout(()=>{if(allCards().length&&allCards().every(c=>game.completed[c.id])&&!game.ended&&confirm('Tutte le tessere sono completate! Vuoi vedere la classifica finale?'))showFinal()},450);
 }
-function finishCard(){
-  if(!cur)return;
-  game.completed[cur.id]=true;
-  closeCard();commit();
-  if(deck&&allCards().every(c=>game.completed[c.id]))toast(deck.final?'🎉 Tabellone finito! Ora tocca al Final Jeopardy':'🎉 Tabellone finito! Vai su 🏁 Classifica');
-}
-function closeCard(){cur=null;lastSec=-1;broadcast();closeM('cardModal')}
 
-/* timer */
-function tickUpdate(){
-  const tb=$('tmBox');
-  if(cur&&tb&&(cur.phase==='open'||cur.phase==='answer')){
-    const s=Math.max(0,Math.ceil((cur.endAt-Date.now())/1000));
-    tb.textContent='⏱ '+s+'s';tb.classList.toggle('danger',s<=3);
-    if(s<=3&&s!==lastSec&&s>0){lastSec=s;playSound('tick')}
-  }
+/* --- Buzzer & timer --- */
+function updateBuzzUI(){$('buzzStatus').classList.toggle('hidden',!cur.buzzed);$('buzzRelease').classList.toggle('hidden',!cur.buzzed)}
+function triggerBuzz(){
+  playSound('buzz');vib([90,40,140]);stopTimer();cur.buzzed=true;updateBuzzUI();
+  const w=$('buzzWrap'),s=document.createElement('span');s.className='wave';w.appendChild(s);setTimeout(()=>s.remove(),850);
+  const b=$('buzzBtn');b.classList.remove('squish');void b.offsetWidth;b.classList.add('squish');broadcast();
 }
-function tick(){
-  let active=false;
-  if(cur){
-    active=true;
-    if(cur.phase==='open'&&Date.now()>=cur.endAt){cur.phase='reveal';cur.result='none';cur.rp=null;playSound('wrong');renderCard();broadcast()}
-    tickUpdate();
-  }
-  const f=game.fj;
-  if(f&&f.phase==='clue'){active=true;if(Date.now()>=f.endAt)fjToJudge();else fjTimerUpdate()}
-  if(!active){clearInterval(tickInt);tickInt=null}
+function releaseBuzz(){cur.buzzed=false;updateBuzzUI();broadcast()}
+function toggleTimer(){timerInt?stopTimer():startTimer()}
+function startTimer(){
+  stopTimer();if(timerLeft<=0)timerLeft=cur.timerStart;$('timerBtn').textContent='⏸';
+  timerInt=setInterval(()=>{
+    timerLeft--;updateTimerUI();playSound('tick',cur.timerStart-timerLeft);
+    if(timerLeft<=0){stopTimer();playSound('wrong');vib([200,80,200]);revealAll();toast('⏰ Tempo scaduto! Errori rivelati.')}
+  },1000);
 }
-function startTick(){if(!tickInt)tickInt=setInterval(tick,250)}
+function stopTimer(){if(timerInt){clearInterval(timerInt);timerInt=null}const b=$('timerBtn');if(b)b.textContent='▶'}
+function resetTimer(){stopTimer();timerLeft=cur?cur.timerStart:10;updateTimerUI(true)}
+function updateTimerUI(instant){
+  const start=cur?cur.timerStart:10,left=Math.max(timerLeft,0),ring=$('ring'),box=$('timerBox'),d=$('timerDisplay');
+  if(instant){ring.style.transition='none';requestAnimationFrame(()=>ring.style.transition='')}
+  ring.style.strokeDashoffset=264*(1-left/start);
+  const danger=left<=3&&left>0;
+  ring.style.stroke=left<=3?'#ef4444':'#fbbf24';d.style.color=left<=3?'#ef4444':'#fbbf24';
+  d.textContent=left;box.classList.toggle('timer-danger',danger);
+}
 
 /* =====================================================================
-   6. FINAL JEOPARDY (HOST)
+   6. PUNTEGGI
    ===================================================================== */
-function openFJ(){
-  if(!deck||!deck.final)return toast('Il mazzo non ha un Final Jeopardy (aggiungilo dall\'Editor)');
-  if(!game.fj){
-    const elig=game.players.filter(p=>p.score>0).map(p=>p.id);
-    if(!elig.length)return toast('Nessuna squadra con punteggio positivo');
-    if(!confirm(`Iniziare il Final Jeopardy? Partecipano ${elig.length} squadre con punteggio > 0.`))return;
-    game.fj={phase:'cat',elig,wagers:{},answers:{},judged:{},endAt:0};
-    saveGame();broadcast();renderBoard();playSound('dd');
+function toggleMult(){cur.mult=!cur.mult;updateMultUI()}
+function updateMultUI(){
+  const t=$('multTxt'),b=$('multBtn');
+  if(t)t.textContent=cur&&cur.mult?'ATTIVO':'off';
+  if(b)b.className='btn !min-h-[56px] '+(cur&&cur.mult?'btn-amber':'');
+}
+function useJoker(type){const j=game.jokers[cur.id];if(j&&j.type===type)j.used=true}
+function applyPts(pid,pts){
+  const p=game.players.find(x=>x.id===pid);if(!p)return alert('Aggiungi prima un giocatore!');
+  if(cur.mult){pts*=2;cur.mult=false;useJoker('double');updateMultUI();toast('🎲 ×2 applicato!')}
+  p.score+=pts;
+  if(pts>0)p.found+=1;else if(pts<0)p.wrong+=1;
+  if(pts>0&&cur.steal){
+    const leader=game.players.filter(x=>x.id!==pid).sort((a,b)=>b.score-a.score)[0];
+    if(leader&&leader.score>0){const take=Math.min(leader.score,pts);leader.score-=take;toast(`🦹 ${take} pt rubati a ${leader.name}`);setTimeout(()=>floatPts(leader.id,-take),300)}
+    cur.steal=false;useJoker('steal');
   }
-  openM('fjModal');renderFJ();startTick();
+  if(pts>0)game.activeId=pid;
+  floatPts(pid,pts);vib(pts>=0?25:[60,30,60]);playSound(pts>=0?'correct':'wrong');commit();
 }
-function renderFJ(){
-  const f=game.fj;if(!f||!deck||!deck.final)return;
-  const fin=deck.final,elig=f.elig.map(pl).filter(Boolean);
-  let h=`<div class="card-question"><div class="small gold">Categoria</div>${esc(fin.category)}</div>`;
-  if(f.phase==='cat'){
-    h+=`<p class="muted text-sm">Le squadre inviano la puntata segreta dal telefono (da 0 al proprio punteggio). Per chi non ha il telefono usa ✏️.</p>`;
-    h+=elig.map(p=>`<div class="row" style="justify-content:space-between"><span class="font-bold">${esc(p.name)} <span class="muted">(${p.score})</span></span><span>${f.wagers[p.id]!==undefined?'✅ puntata '+f.wagers[p.id]:'⏳ …'} <button class="btn !min-h-[32px] !px-2" onclick="fjSetW(${p.id})">✏️</button></span></div>`).join('');
-    h+=`<button class="btn btn-gold w-full !py-3" onclick="fjToClue()">▶ Mostra l'indizio (${FJ_SECS}s)</button>`;
-  }else if(f.phase==='clue'){
-    h+=`<div class="card-question">${esc(fin.question)}</div><div id="fjTimer" class="timer text-center"></div>`;
-    h+=elig.map(p=>`<div class="row" style="justify-content:space-between"><span class="font-bold">${esc(p.name)}</span><span>${f.answers[p.id]!==undefined?'✅ risposto':'⏳ …'} <button class="btn !min-h-[32px] !px-2" onclick="fjSetA(${p.id})">✏️</button></span></div>`).join('');
-    h+=`<button class="btn w-full" onclick="fjToJudge()">⏹ Chiudi le risposte</button>`;
-  }else{
-    h+=`<div class="card-question">${esc(fin.question)}</div><div class="ans-host"><div class="small muted">Risposta corretta</div><div style="font-family:'Playfair Display',serif;font-size:1.4rem;color:var(--gold);font-weight:700">${esc(fin.answer)}</div></div>`;
-    h+=elig.map(p=>{
-      const j=f.judged[p.id],w=f.wagers[p.id]||0;
-      return `<div class="box space-y-2"><div class="flex justify-between"><b>${esc(p.name)}</b><span class="gold font-bold">Puntata ${w}</span></div><div class="font-serif text-lg">«${esc(f.answers[p.id]||'(nessuna risposta)')}»</div>${j===undefined?`<div class="flex gap-2"><button class="btn btn-green flex-1" onclick="fjJudge(${p.id},true)">✓ Giusta (+${w})</button><button class="btn btn-red flex-1" onclick="fjJudge(${p.id},false)">✗ Sbagliata (−${w})</button></div>`:`<div class="font-bold ${j?'text-green-400':'text-red-400'}">${j?'✅ Giusta':'❌ Sbagliata'}</div>`}</div>`;
-    }).join('');
-    const all=elig.every(p=>f.judged[p.id]!==undefined);
-    h+=`<button class="btn btn-gold w-full !py-3" ${all?'':'disabled'} onclick="fjEnd()">🏆 Mostra classifica finale</button>`;
-  }
-  $('fjBody').innerHTML=h;fjTimerUpdate();
+function award(sign){applyPts(parseInt($('assignSel').value,10),sign*cur.card.points)}
+function awardManual(){const v=parseInt($('manualPts').value,10);if(isNaN(v))return;applyPts(parseInt($('assignSel').value,10),v);$('manualPts').value=''}
+function resetGame(){
+  if(!confirm('Iniziare una NUOVA PARTITA?\nPunteggi, tessere completate e spunte verranno azzerati. Squadre e mazzo restano.'))return;
+  game.players.forEach(p=>{p.score=0;p.found=0;p.wrong=0});game.completed={};game.solved={};game.jokers={};game.ended=false;
+  ['cardModal','finalModal'].forEach(m=>$(m).classList.remove('open','closing'));cur=null;stopTimer();if(deck)commit();
 }
-function fjTimerUpdate(){const f=game.fj,el=$('fjTimer');if(!f||!el)return;const s=Math.max(0,Math.ceil((f.endAt-Date.now())/1000));el.textContent='⏱ '+s+'s';el.classList.toggle('danger',s<=5)}
-function fjSetW(pid){
-  const p=pl(pid);const v=prompt(`Puntata di ${p.name} (0–${p.score}):`,game.fj.wagers[pid]??0);if(v===null)return;
-  const n=Math.min(p.score,Math.max(0,parseInt(v,10)||0));game.fj.wagers[pid]=n;saveGame();renderFJ();broadcast();
-}
-function fjSetA(pid){
-  const p=pl(pid);const v=prompt(`Risposta di ${p.name}:`,game.fj.answers[pid]||'');if(v===null)return;
-  game.fj.answers[pid]=v.slice(0,120);saveGame();renderFJ();broadcast();
-}
-function fjToClue(){const f=game.fj;f.phase='clue';f.endAt=Date.now()+FJ_SECS*1000;saveGame();renderFJ();broadcast();startTick();playSound('open')}
-function fjToJudge(){
-  const f=game.fj;if(!f||f.phase==='judge')return;
-  f.phase='judge';f.endAt=0;f.elig.forEach(id=>{if(f.wagers[id]===undefined)f.wagers[id]=0});
-  saveGame();renderFJ();broadcast();playSound('wrong');
-}
-function fjJudge(pid,ok){
-  const f=game.fj;if(!f||f.phase!=='judge'||f.judged[pid]!==undefined)return;const p=pl(pid);if(!p)return;
-  const w=f.wagers[pid]||0;p.score+=ok?w:-w;f.judged[pid]=ok;floatPts(pid,ok?w:-w);playSound(ok?'correct':'wrong');
-  commit();renderFJ();
-}
-function fjEnd(){closeM('fjModal',()=>showFinal())}
 
 /* =====================================================================
-   7. CLASSIFICA FINALE
+   7. SPAREGGIO
+   ===================================================================== */
+let sd={active:false,phase:'setup',qs:[],i:0,ids:[],pts:{},locked:[],buzz:null};
+function openSudden(){if(!needDeck())return;sd={active:true,phase:'setup',qs:[],i:0,ids:[],pts:{},locked:[],buzz:null};renderSudden();openM('sdModal');broadcast()}
+function closeSudden(){sd.active=false;closeM('sdModal');broadcast()}
+function sdStart(){
+  const ids=game.players.filter(p=>$('sdChk'+p.id)&&$('sdChk'+p.id).checked).map(p=>p.id);
+  if(ids.length<2)return alert('Seleziona almeno 2 partecipanti.');
+  if(!deck.sudden||!deck.sudden.length)return alert('Nessuna domanda: aggiungile dall\'Editor → Spareggio.');
+  sd.ids=ids;sd.qs=shuffle(deck.sudden).slice(0,5);sd.i=0;sd.pts={};ids.forEach(i=>sd.pts[i]=0);sd.locked=[];sd.buzz=null;sd.phase='ask';initAudio();renderSudden();
+}
+function sdBuzz(pid){if(sd.phase!=='ask'||sd.buzz!==null||sd.locked.includes(pid))return;sd.buzz=pid;playSound('buzz');vib(80);renderSudden()}
+function sdMark(ok){
+  if(sd.buzz===null)return;
+  if(ok){sd.pts[sd.buzz]++;playSound('correct');sdNext()}
+  else{sd.locked.push(sd.buzz);sd.buzz=null;playSound('wrong');if(sd.locked.length>=sd.ids.length)sdNext();else renderSudden()}
+}
+function sdNext(){sd.i++;sd.locked=[];sd.buzz=null;if(sd.i>=sd.qs.length)sd.phase='end';renderSudden()}
+function sdAward(pid){const bonus=parseInt($('sdBonus').value,10)||0;adjust(pid,bonus);playSound('win')}
+const pName=id=>(game.players.find(p=>p.id===id)||{name:'?'}).name;
+function renderSudden(){
+  const b=$('sdBody');
+  if(sd.phase==='setup'){
+    const top=Math.max(...game.players.map(p=>p.score)),tied=game.players.filter(p=>p.score===top);
+    const def=tied.length>=2?tied.map(p=>p.id):game.players.map(p=>p.id);
+    b.innerHTML=`<p class="text-sm text-slate-300">Scegli i partecipanti (di default i pari merito in testa). 5 domande lampo: il primo a prenotarsi risponde; chi sbaglia è fuori per quella domanda.</p>
+      <div class="space-y-2">${game.players.map(p=>`<label class="flex items-center gap-2 text-sm"><input type="checkbox" id="sdChk${p.id}" ${def.includes(p.id)?'checked':''}> ${esc(p.name)} <span class="text-slate-500">(${p.score} pt)</span></label>`).join('')}</div>
+      <button class="btn btn-amber !py-3" onclick="sdStart()">⚔️ Avvia spareggio</button>`;
+  }else if(sd.phase==='ask'){
+    const q=sd.qs[sd.i];
+    b.innerHTML=`<div class="flex justify-between flex-wrap gap-1 text-xs text-slate-400"><span>Domanda ${sd.i+1}/${sd.qs.length}</span><span>${sd.ids.map(i=>`${esc(pName(i))}: <b class="text-amber-300">${sd.pts[i]}</b>`).join(' · ')}</span></div>
+      <div class="p-5 rounded-2xl bg-slate-900/90 border border-purple-900/40 text-xl font-semibold">${esc(q.q)}</div>
+      ${sd.buzz===null?`<div class="grid grid-cols-2 sm:grid-cols-3 gap-3">${sd.ids.map((id,n)=>`<button class="px-4 py-5 rounded-xl font-heading font-black text-lg active:scale-95 transition ${sd.locked.includes(id)?'bg-slate-800 text-slate-600 line-through':'bg-amber-400 text-slate-950 hover:bg-amber-300'}" ${sd.locked.includes(id)?'disabled':''} onclick="sdBuzz(${id})">${n+1}. ${esc(pName(id))}</button>`).join('')}</div><p class="text-[11px] text-slate-500">Scorciatoia da tastiera: tasti 1–9.</p>`
+      :`<div class="p-4 rounded-xl bg-amber-950/40 border border-amber-600/40 pop-in"><div class="text-amber-300 font-bold">🚨 ${esc(pName(sd.buzz))} ha prenotato!</div><div class="text-sm mt-1">Risposta corretta: <b class="text-emerald-300">${esc(q.a)}</b></div><div class="flex gap-2 mt-3"><button class="btn btn-green" onclick="sdMark(true)">✓ Giusta (+1)</button><button class="btn btn-red" onclick="sdMark(false)">✗ Sbagliata</button></div></div>`}
+      <button class="btn" onclick="sdNext()">⏭ Nessuno sa / Salta</button>`;
+  }else{
+    const mx=Math.max(...sd.ids.map(i=>sd.pts[i])),win=sd.ids.filter(i=>sd.pts[i]===mx);
+    b.innerHTML=`<h4 class="font-heading font-black text-2xl text-amber-400 text-center">${win.length===1?'🏆 Vince '+esc(pName(win[0])):'🤝 Pareggio!'}</h4>
+      <div class="space-y-1 text-sm">${sd.ids.map(i=>`<div class="flex justify-between p-2 rounded-lg bg-slate-900/70"><span>${esc(pName(i))}</span><b>${sd.pts[i]}</b></div>`).join('')}</div>
+      <div class="flex items-center gap-2"><label class="text-xs text-slate-400">Bonus punti:</label><input id="sdBonus" type="number" class="inp !w-28" value="200"></div>
+      <div class="flex flex-wrap gap-2">${win.map(i=>`<button class="btn btn-green" onclick="sdAward(${i})">Assegna bonus a ${esc(pName(i))}</button>`).join('')}<button class="btn" onclick="openSudden()">↻ Nuovo spareggio</button></div>`;
+  }
+}
+document.addEventListener('keydown',e=>{
+  if(!sd.active||sd.phase!=='ask'||sd.buzz!==null)return;
+  if(['INPUT','TEXTAREA','SELECT'].includes(e.target.tagName))return;
+  const n=parseInt(e.key,10);if(n>=1&&n<=sd.ids.length)sdBuzz(sd.ids[n-1]);
+});
+
+/* =====================================================================
+   8. FINALE
    ===================================================================== */
 function podiumHtml(list){
-  const s=list.slice().sort((a,b)=>b.score-a.score),order=[1,0,2],h=[110,150,80],m=['🥈','🥇','🥉'];
+  const s=list.slice().sort((a,b)=>b.score-a.score),order=[1,0,2],h=['h-28','h-40','h-20'],m=['🥈','🥇','🥉'],dl=['.5s','1.1s','0s'];
   return `<div class="flex items-end justify-center gap-3">`+order.map((idx,c)=>{
-    const p=s[idx];if(!p)return '<div style="width:96px"></div>';
-    return `<div class="text-center" style="width:104px"><div class="font-serif font-bold truncate gold">${esc(p.name)}</div><div class="font-black gold">${p.score} pt</div><div class="pod" style="height:${h[c]}px">${m[c]}</div></div>`;
+    const p=s[idx];if(!p)return '<div class="w-24"></div>';
+    return `<div class="text-center w-24 sm:w-36"><div class="font-bold truncate">${esc(p.name)}</div><div class="text-amber-300 font-black">${p.score} pt</div><div class="pod ${h[c]} rounded-t-xl bg-gradient-to-t from-purple-700 to-amber-400/80 flex items-start justify-center text-3xl pt-2 mt-1" style="animation-delay:${dl[c]}">${m[c]}</div></div>`;
   }).join('')+`</div>`;
 }
 let confettiTimer=null;
@@ -635,435 +1056,540 @@ function fireConfetti(){
     if(Date.now()>end)return clearInterval(confettiTimer);
     confetti({particleCount:6,angle:60,spread:60,origin:{x:0,y:.8}});
     confetti({particleCount:6,angle:120,spread:60,origin:{x:1,y:.8}});
+    confetti({particleCount:4,spread:100,origin:{x:.5,y:.3}});
   },120);
 }
 function showFinal(){
   if(!needDeck())return;
   game.ended=true;saveGame();broadcast();
   const ps=game.players.slice().sort((a,b)=>b.score-a.score);
-  const total=allCards().length,done=allCards().filter(c=>game.completed[c.id]).length;
+  const totalCards=allCards().length,done=allCards().filter(c=>game.completed[c.id]).length;
+  const found=ps.reduce((a,p)=>a+p.found,0),wrong=ps.reduce((a,p)=>a+p.wrong,0);
+  const mvp=ps.slice().sort((a,b)=>b.found-a.found)[0];
   $('finalBody').innerHTML=podiumHtml(ps.map(p=>({name:p.name,score:p.score})))+
-    `<div class="grid grid-cols-2 gap-3 text-center">${[['Tessere giocate',done+'/'+total],['Squadre',ps.length]].map(([l,v])=>`<div class="box"><div class="text-2xl font-serif font-black gold">${v}</div><div class="small muted">${l}</div></div>`).join('')}</div>
-    <div class="space-y-2">${ps.map((p,i)=>`<div class="row" style="justify-content:space-between"><span class="font-bold">${i+1}. ${esc(p.name)}</span><b class="gold">${p.score}</b></div>`).join('')}</div>
+    `<div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center">
+      ${[['Tessere giocate',done+'/'+totalCards],['Errori trovati',found],['Penalità',wrong],['Joker usciti',Object.keys(game.jokers).length]].map(([l,v])=>`<div class="p-3 rounded-xl bg-slate-900/70 border border-slate-800"><div class="text-2xl font-heading font-black text-amber-400">${v}</div><div class="text-[11px] text-slate-400 uppercase">${l}</div></div>`).join('')}
+    </div>
+    ${mvp&&mvp.found>0?`<p class="text-center text-sm">🎯 Cacciatore di errori: <b class="text-amber-300">${esc(mvp.name)}</b> (${mvp.found} errori trovati)</p>`:''}
+    <table class="w-full text-sm"><thead class="text-slate-400 text-xs uppercase"><tr><th class="text-left p-2">Squadra</th><th>Punti</th><th>Errori</th><th>Penalità</th></tr></thead><tbody>
+      ${ps.map(p=>`<tr class="border-t border-slate-800 text-center"><td class="text-left p-2 font-bold">${esc(p.name)}</td><td>${p.score}</td><td>${p.found}</td><td>${p.wrong}</td></tr>`).join('')}
+    </tbody></table>
     <div class="flex justify-center"><button class="btn btn-red" onclick="resetGame()">🔄 Nuova partita</button></div>`;
   openM('finalModal');setTimeout(()=>{playSound('win');fireConfetti()},300);
 }
 function closeFinal(){game.ended=false;saveGame();closeM('finalModal');broadcast()}
-function resetGame(){
-  if(!confirm('Nuova partita? Punteggi e tessere vengono azzerati (le squadre restano).'))return;
-  game.players.forEach(p=>p.score=0);game.completed={};game.ended=false;game.fj=null;
-  cur=null;['cardModal','finalModal','fjModal'].forEach(m=>$(m).classList.remove('open','closing'));
-  commit();
-}
 
 /* =====================================================================
-   8. EDITOR & MAZZO
+   9. EDITOR
    ===================================================================== */
-function demoDeck(){
-  const c=(id,title,emoji,arr)=>({id,title,emoji,cards:arr.map((x,i)=>({id:id+'_'+(i+1),points:(i+1)*100,question:x[0],answer:x[1],dailyDouble:!!x[2]}))});
-  return{version:2,categories:[
-    c('geo','Geografia','🌍',[["È il fiume più lungo d'Italia.","Il Po"],["Capitale dell'Australia (non è Sydney).","Canberra"],["La montagna più alta delle Alpi.","Il Monte Bianco"],["È il più grande deserto caldo del mondo.","Il Sahara"]]),
-    c('cin','Cinema','🎬',[["Regista italiano de «La dolce vita» e «8½».","Federico Fellini"],["Film Pixar del 2003 in cui un pesce pagliaccio cerca suo figlio.","Alla ricerca di Nemo"],["L'attore che interpreta Jack Dawson in «Titanic».","Leonardo DiCaprio"],["Saga fantasy di Peter Jackson tratta dai libri di Tolkien.","Il Signore degli Anelli"]]),
-    c('sci','Scienza','🔬',[["Il simbolo chimico dell'oro.","Au"],["Il pianeta più vicino al Sole.","Mercurio"],["È il gas più abbondante nell'atmosfera terrestre.","L'azoto",true],["Il numero atomico del carbonio.","6"]]),
-    c('sto','Storia','🏛️',[["Anno in cui l'uomo mise piede sulla Luna.","1969"],["Il dittatore romano ucciso alle Idi di marzo del 44 a.C.","Giulio Cesare"],["Città sepolta dall'eruzione del Vesuvio nel 79 d.C. insieme a Ercolano.","Pompei"],["Anno della caduta del Muro di Berlino.","1989"]])
-  ],final:{category:'Italia',question:'È la regione italiana con il maggior numero di abitanti.',answer:'La Lombardia'}};
-}
-function loadDemo(){deck=demoDeck();purgeOrphans();saveDeck();edCat=deck.categories[0].id;renderAll();commit();toast('Mazzo demo caricato')}
 let edTab='cats',edCat=null,edCardId=null;
 function openEditor(tab){
   if(!needDeck())return;edTab=tab||edTab;
-  if(!edCat||!deck.categories.some(c=>c.id===edCat))edCat=deck.categories[0]?.id||null;
+  if(!edCat||(edCat!=='__show'&&!deck.categories.some(c=>c.id===edCat)))edCat=deck.categories[0]?.id||'__show';
   renderEditor();openM('editorModal');
 }
 function finishEdit(){closeM('editorModal',()=>openQR())}
 function renderEditor(){
-  const tabs=[['cats','📂 Categorie'],['cards','🃏 Tessere'],['final','⚡ Finale'],['json','💾 Import/Export']];
-  $('edTabs').innerHTML=tabs.map(([k,l])=>`<button class="btn ${edTab===k?'btn-gold':''}" onclick="edTab='${k}';renderEditor()">${l}</button>`).join('');
-  $('edBody').innerHTML=edTab==='cats'?edCatsHtml():edTab==='cards'?edCardsHtml():edTab==='final'?edFinalHtml():edJsonHtml();
-  if(edTab==='cards')updQPrev();
+  const tabs=[['cats','📂 Categorie'],['cards','🃏 Tessere'],['json','💾 Import/Export'],['sd','⚔️ Spareggio']];
+  $('edTabs').innerHTML=tabs.map(([k,l])=>`<button class="btn ${edTab===k?'btn-amber':''}" onclick="edTab='${k}';renderEditor()">${l}</button>`).join('');
+  $('edBody').innerHTML=edTab==='cats'?edCatsHtml():edTab==='cards'?edCardsHtml():edTab==='json'?edJsonHtml():edSdHtml();
 }
-function edAfter(){saveDeck();saveGame();renderBoard();broadcast();renderEditor()}
+function edAfter(){saveDeck();renderBoard();broadcast()}
 function edCatsHtml(){
   return deck.categories.map((c,i)=>`<div class="flex gap-2 items-center">
-    <input class="inp !w-16 text-center" maxlength="4" value="${esc(c.emoji||'📋')}" onchange="edCatSet(${i},'emoji',this.value)">
+    <input class="inp !w-16 text-center" maxlength="4" value="${esc(c.emoji)}" onchange="edCatSet(${i},'emoji',this.value)">
     <input class="inp" value="${esc(c.title)}" onchange="edCatSet(${i},'title',this.value)">
-    <span class="text-xs muted whitespace-nowrap">${c.cards.length}🃏</span>
+    <span class="text-xs text-slate-400 whitespace-nowrap">${c.cards.length}🃏</span>
     <button class="btn" onclick="edCatMove(${i},-1)">↑</button><button class="btn" onclick="edCatMove(${i},1)">↓</button>
-    <button class="btn btn-red" onclick="edCatDel(${i})">🗑</button></div>`).join('')+`<button class="btn btn-blue" onclick="edCatAdd()">+ Aggiungi categoria</button>`;
+    <button class="btn btn-red" onclick="edCatDel(${i})">🗑</button></div>`).join('')+
+    `<button class="btn btn-purple" onclick="edCatAdd()">+ Aggiungi categoria</button>`;
 }
-function edCatSet(i,k,v){v=v.trim();if(v)deck.categories[i][k]=v;edAfter()}
-function edCatMove(i,d){const j=i+d,a=deck.categories;if(j<0||j>=a.length)return;[a[i],a[j]]=[a[j],a[i]];edAfter()}
-function edCatDel(i){const c=deck.categories[i];if(!confirm(`Eliminare "${c.title}" e le sue ${c.cards.length} tessere?`))return;deck.categories.splice(i,1);purgeOrphans();edCat=deck.categories[0]?.id||null;edAfter()}
-function edCatAdd(){const c={id:uid(),title:'Nuova categoria',emoji:'📋',cards:[]};deck.categories.push(c);edCat=c.id;edAfter()}
+function edCatSet(i,k,v){v=v.trim();if(v)deck.categories[i][k]=v;edAfter();renderEditor()}
+function edCatMove(i,d){const j=i+d,a=deck.categories;if(j<0||j>=a.length)return;[a[i],a[j]]=[a[j],a[i]];edAfter();renderEditor()}
+function edCatDel(i){const c=deck.categories[i];if(!confirm(`Eliminare "${c.title}" e le sue ${c.cards.length} tessere?`))return;deck.categories.splice(i,1);purgeOrphans();saveGame();edCat=deck.categories[0]?.id||'__show';edAfter();renderEditor();renderPlayers()}
+function edCatAdd(){const c={id:uid(),title:'Nuova categoria',emoji:'❓',cards:[]};deck.categories.push(c);edCat=c.id;edAfter();renderEditor()}
 function edCardsHtml(){
-  if(!deck.categories.length)return '<p class="muted text-sm">Crea prima una categoria.</p>';
-  const opts=deck.categories.map(c=>`<option value="${esc(c.id)}" ${c.id===edCat?'selected':''}>${esc((c.emoji||'')+' '+c.title)}</option>`).join('');
-  const list=deck.categories.find(c=>c.id===edCat)?.cards||[];
-  const k=edCardId?findCard(edCardId)?.card:null;
-  const v=k||{points:(list.length+1)*100,question:'',answer:'',dailyDouble:false};
-  return `<div class="flex gap-2 items-center"><label class="text-xs muted">Categoria:</label><select class="inp !w-auto" onchange="edCat=this.value;edCardId=null;renderEditor()">${opts}</select></div>
-  <div class="space-y-2">${list.slice().sort((a,b)=>a.points-b.points).map(c=>`<div class="row"><b class="gold w-14">${c.points}</b><span class="flex-1 truncate text-sm">${esc(c.question)}</span>${c.dailyDouble?'<span class="badge-dd">DD</span>':''}<button class="btn !px-3" data-id="${esc(c.id)}" onclick="edCardId=this.dataset.id;renderEditor()">✏️</button><button class="btn btn-red !px-3" data-id="${esc(c.id)}" onclick="edDelCard(this.dataset.id)">🗑</button></div>`).join('')||'<p class="text-xs muted">Nessuna tessera.</p>'}</div>
-  <div class="box space-y-3">
-    <div class="flex justify-between"><h4 class="font-serif font-bold gold text-sm">${edCardId?'Modifica':'Nuova'} tessera</h4>${edCardId?'<button class="btn" onclick="edCardId=null;renderEditor()">+ Nuova</button>':''}</div>
-    <div class="grid grid-cols-2 gap-3"><div><label class="text-[11px] muted">Punti</label><input id="fPoints" type="number" class="inp" value="${v.points}"></div>
-      <div><label class="text-[11px] muted">Daily Double</label><div class="pt-2"><input id="fDD" type="checkbox" class="check" ${v.dailyDouble?'checked':''}></div></div></div>
-    <div><label class="text-[11px] muted">Domanda (la vedono i telefoni quando la apri)</label><textarea id="fQuestion" rows="3" class="inp" oninput="updQPrev()">${esc(v.question)}</textarea><div id="fQPrev" class="mt-1 p-2 rounded-lg bg-black/40 text-sm gold"></div></div>
-    <div><label class="text-[11px] muted">Risposta (solo conduttore)</label><textarea id="fAnswer" rows="2" class="inp">${esc(v.answer)}</textarea></div>
-    <button class="btn btn-gold" onclick="edSaveCard()">💾 Salva tessera</button>
+  const opts=deck.categories.map(c=>`<option value="${esc(c.id)}" ${c.id===edCat?'selected':''}>${esc(c.emoji+' '+c.title)}</option>`).join('')+`<option value="__show" ${edCat==='__show'?'selected':''}>★ Showdown finale</option>`;
+  const list=edCat==='__show'?(deck.showdown?[deck.showdown]:[]):(deck.categories.find(c=>c.id===edCat)?.cards||[]);
+  const k=edCardId?(findCard(edCardId)?.card):null;
+  const v=k||{points:(list.length+1)*100,text:'',solutions:[{err:'',corr:''},{err:'',corr:''},{err:'',corr:''}],trapType:'none',trapNote:''};
+  return `<div class="flex gap-2 items-center"><label class="text-xs text-slate-400">Categoria:</label><select class="inp !w-auto" onchange="edCat=this.value;edCardId=null;renderEditor()">${opts}</select></div>
+  <div class="space-y-1.5">${list.slice().sort((a,b)=>a.points-b.points).map(c=>`<div class="flex items-center gap-2 p-2 rounded-lg bg-slate-900/70 text-xs"><b class="text-amber-400 w-12">${c.points}</b><span class="flex-1 truncate">${esc(c.text.replace(/\*/g,''))}</span><button class="btn" data-id="${esc(c.id)}" onclick="edCardId=this.dataset.id;renderEditor()">✏️</button>${c.id!=='showdown'?`<button class="btn btn-red" data-id="${esc(c.id)}" onclick="edDelCard(this.dataset.id)">🗑</button>`:''}</div>`).join('')||'<p class="text-xs text-slate-500">Nessuna tessera in questa categoria.</p>'}</div>
+  <div class="p-4 rounded-2xl bg-slate-900/70 border border-slate-800 space-y-3">
+    <div class="flex justify-between"><h4 class="font-bold text-amber-400 text-sm">${edCardId?'Modifica tessera':'Nuova tessera'}</h4>${edCardId?'<button class="btn" onclick="edCardId=null;renderEditor()">+ Nuova</button>':''}</div>
+    <div class="grid grid-cols-3 gap-3"><div><label class="text-[11px] text-slate-400">Punti</label><input id="fPoints" type="number" class="inp" value="${v.points}"></div>
+      <div class="col-span-2"><label class="text-[11px] text-slate-400">Tipo di trappola</label><select id="fTrap" class="inp">${Object.entries(TRAPS).map(([k2,l])=>`<option value="${k2}" ${v.trapType===k2?'selected':''}>${l}</option>`).join('')}</select></div></div>
+    <div><label class="text-[11px] text-slate-400">Testo da leggere — gli ERRORI tra *asterischi* (esattamente 3)</label>
+      <textarea id="fText" rows="4" class="inp" oninput="$('fPrev').innerHTML=highlight(this.value)">${esc(v.text)}</textarea>
+      <div id="fPrev" class="mt-2 p-3 rounded-lg bg-slate-950 text-sm leading-loose">${highlight(v.text)}</div></div>
+    ${[0,1,2].map(i=>`<div class="grid grid-cols-1 sm:grid-cols-2 gap-2"><input id="fE${i}" class="inp" placeholder="Errore ${i+1} (come appare nel testo)" value="${esc(v.solutions[i]?.err||'')}"><input id="fC${i}" class="inp" placeholder="Correzione (**grassetto** per la risposta)" value="${esc(v.solutions[i]?.corr||'')}"></div>`).join('')}
+    <div><label class="text-[11px] text-slate-400">Note per il conduttore</label><input id="fTrapNote" class="inp" value="${esc(v.trapNote)}"></div>
+    <button class="btn btn-amber" onclick="edSaveCard()">💾 Salva tessera</button>
   </div>`;
 }
-function updQPrev(){const q=$('fQuestion'),p=$('fQPrev');if(q&&p)p.textContent=q.value}
 function edSaveCard(){
-  const points=parseInt($('fPoints').value,10),question=$('fQuestion').value.trim(),answer=$('fAnswer').value.trim();
-  if(!(points>0))return alert('Punti non validi');if(!question)return alert('Inserisci la domanda');if(!answer)return alert('Inserisci la risposta');
-  const base={points,question,answer,dailyDouble:$('fDD').checked};
-  const cat=deck.categories.find(c=>c.id===edCat);if(!cat)return;
-  if(edCardId){const i=cat.cards.findIndex(c=>c.id===edCardId);if(i>=0)cat.cards[i]={...base,id:edCardId}}else cat.cards.push({...base,id:uid()});
-  edCardId=null;edAfter();toast('Tessera salvata ✓');
+  const g=id=>$(id).value.trim();
+  const points=parseInt(g('fPoints'),10),text=g('fText');
+  const sol=[0,1,2].map(i=>({err:g('fE'+i),corr:g('fC'+i)}));
+  if(!(points>0))return alert('Inserisci un valore in punti valido.');
+  if(!text)return alert('Inserisci il testo da leggere.');
+  if(sol.some(s=>!s.err||!s.corr))return alert('I 3 errori (etichetta + correzione) sono obbligatori.');
+  const n=(text.match(/\*(.+?)\*/g)||[]).length;
+  if(n!==3&&!confirm(`Nel testo ci sono ${n} parti tra asterischi invece di 3. Salvare comunque?`))return;
+  const base={points,text,solutions:sol,trapType:$('fTrap').value,trapNote:g('fTrapNote')};
+  if(edCat==='__show')deck.showdown={...base,id:'showdown'};
+  else{
+    const cat=deck.categories.find(c=>c.id===edCat);if(!cat)return alert('Crea prima una categoria.');
+    if(edCardId){const i=cat.cards.findIndex(c=>c.id===edCardId);if(i>=0)cat.cards[i]={...base,id:edCardId}}
+    else cat.cards.push({...base,id:uid()});
+  }
+  edCardId=null;edAfter();renderEditor();toast('Tessera salvata ✓');
 }
-function edDelCard(id){if(!confirm('Eliminare la tessera?'))return;deck.categories.forEach(c=>c.cards=c.cards.filter(k=>k.id!==id));purgeOrphans();edCardId=null;edAfter()}
-function edFinalHtml(){
-  const f=deck.final||{category:'',question:'',answer:''};
-  return `<p class="text-xs muted">Il Final Jeopardy si gioca a fine partita: puntata segreta, indizio, risposta scritta dai telefoni.</p>
-  <div><label class="text-[11px] muted">Categoria</label><input id="fjCat" class="inp" value="${esc(f.category)}"></div>
-  <div><label class="text-[11px] muted">Indizio</label><textarea id="fjQ" rows="3" class="inp">${esc(f.question)}</textarea></div>
-  <div><label class="text-[11px] muted">Risposta</label><input id="fjA" class="inp" value="${esc(f.answer)}"></div>
-  <div class="flex gap-2"><button class="btn btn-gold" onclick="edSaveFinal()">💾 Salva</button><button class="btn btn-red" onclick="deck.final=null;edAfter()">🗑 Rimuovi finale</button></div>`;
-}
-function edSaveFinal(){
-  const category=$('fjCat').value.trim(),question=$('fjQ').value.trim(),answer=$('fjA').value.trim();
-  if(!category||!question||!answer)return alert('Compila categoria, indizio e risposta');
-  deck.final={category,question,answer};edAfter();toast('Finale salvato ✓');
-}
+function edDelCard(id){if(!confirm('Eliminare questa tessera?'))return;deck.categories.forEach(c=>c.cards=c.cards.filter(k=>k.id!==id));purgeOrphans();saveGame();edCardId=null;edAfter();renderEditor()}
 function edJsonHtml(){
-  return `<p class="text-xs muted">Esporta/importa il mazzo (categorie, tessere, finale).</p>
-  <textarea id="jsonBox" rows="10" class="inp font-mono text-[11px]">${esc(JSON.stringify(deck,null,2))}</textarea>
-  <div class="flex flex-wrap gap-2"><button class="btn" onclick="dlDeck()">⬇️ Scarica .json</button><button class="btn" onclick="copyDeck()">📋 Copia</button>
-    <button class="btn btn-gold" onclick="applyImport($('jsonBox').value)">⬆️ Importa dal riquadro</button>
+  return `<p class="text-xs text-slate-400">Il JSON contiene categorie, tessere, showdown e domande di spareggio. Si importa anche il vecchio formato (<code>readText</code>/<code>trapNote</code>/<code>showdownCard</code>).</p>
+  <textarea id="jsonBox" rows="12" class="inp font-mono text-[11px]">${esc(JSON.stringify(deck,null,2))}</textarea>
+  <div class="flex flex-wrap gap-2">
+    <button class="btn" onclick="dlDeck()">⬇️ Scarica .json</button><button class="btn" onclick="copyDeck()">📋 Copia</button>
+    <button class="btn btn-amber" onclick="applyImport($('jsonBox').value)">⬆️ Importa dal riquadro</button>
     <label class="btn cursor-pointer">📂 Importa da file<input type="file" accept=".json,application/json" class="hidden" onchange="importFile(this)"></label>
-    <button class="btn btn-red" onclick="removeDeck()">🗑 Rimuovi mazzo</button></div>`;
+    <button class="btn btn-red" onclick="removeDeck()">🗑 Rimuovi mazzo da questo dispositivo</button>
+  </div>`;
 }
-function dlDeck(){const b=new Blob([JSON.stringify(deck,null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='jeopardy-mazzo.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),2000)}
+function dlDeck(){const b=new Blob([JSON.stringify(deck,null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='erm-actually-mazzo.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),2000)}
 function copyDeck(){navigator.clipboard.writeText($('jsonBox').value).then(()=>toast('Copiato ✓'),()=>toast('Copia non riuscita'))}
 function normalizeDeck(o){
   if(!o||!Array.isArray(o.categories))throw new Error('manca l\'array "categories".');
-  const used=new Set();
+  const used=new Set(['showdown']);
   const nc=(k,where)=>{
-    const question=k.question??k.text??k.readText;
-    if(typeof question!=='string'||!question.trim())throw new Error('tessera senza domanda ('+where+').');
+    const text=k.text??k.readText;if(typeof text!=='string'||!text.trim())throw new Error(`tessera senza testo (${where}).`);
+    const sol=(k.solutions||[]).slice(0,3).map(s=>({err:String(s.err||''),corr:String(s.corr||'')}));
+    if(sol.length!==3)throw new Error(`ogni tessera richiede esattamente 3 errori (${where}).`);
     let id=k.id&&String(k.id);if(!id||used.has(id))id=uid();used.add(id);
-    return{id,points:Number(k.points)||100,question:question.trim(),answer:String(k.answer??''),dailyDouble:!!k.dailyDouble};
+    return{id,points:Number(k.points)||100,text,solutions:sol,trapType:TRAPS[k.trapType]?k.trapType:(k.trapNote?'bait':'none'),trapNote:String(k.trapNote||'')};
   };
-  const cats=o.categories.map(c=>({id:String(c.id||uid()),title:String(c.title||'Categoria'),emoji:String(c.emoji||'📋'),cards:(c.cards||[]).map(k=>nc(k,c.title||'?'))}));
-  let fin=o.final||o.finalJeopardy||o.showdown||null;
-  if(fin){fin={category:String(fin.category||'Final Jeopardy'),question:String(fin.question??fin.text??''),answer:String(fin.answer??'')};if(!fin.question)fin=null}
-  return{version:2,categories:cats,final:fin};
+  const cats=o.categories.map(c=>({id:String(c.id||uid()),title:String(c.title||'Categoria'),emoji:String(c.emoji||LEGACY_ICONS[c.icon]||'❓'),cards:(c.cards||[]).map(k=>nc(k,c.title||'categoria'))}));
+  const sh=o.showdown||o.showdownCard;
+  const sudden=Array.isArray(o.sudden)?o.sudden.filter(x=>x&&x.q).map(x=>({q:String(x.q),a:String(x.a||'')})):[];
+  return{version:3,categories:cats,showdown:sh?{...nc(sh,'showdown'),id:'showdown'}:null,sudden};
 }
+function lintDeck(d){const bad=[];d.categories.forEach(c=>c.cards.forEach(k=>{if((k.text.match(/\*(.+?)\*/g)||[]).length!==3)bad.push(c.title+' '+k.points)}));return bad}
 function applyImport(text){
   try{
     const d=normalizeDeck(JSON.parse(text));
     if(deck&&!confirm('Sostituire il mazzo attuale con quello importato?'))return;
-    deck=d;purgeOrphans();if(!deck.final)game.fj=null;saveGame();saveDeck();edCat=deck.categories[0]?.id||null;edCardId=null;
-    renderAll();broadcast();if($('editorModal').classList.contains('open'))renderEditor();toast('Mazzo importato ✓');
+    deck=d;purgeOrphans();saveGame();saveDeck();edCat=deck.categories[0]?.id||'__show';edCardId=null;
+    renderAll();broadcast();if($('editorModal').classList.contains('open'))renderEditor();
+    const bad=lintDeck(d);toast(bad.length?`Mazzo importato ✓ (attenzione: ${bad.length} tessere senza 3 evidenziazioni)`:'Mazzo importato ✓');
   }catch(e){alert('Impossibile importare il mazzo: '+e.message)}
 }
-function importFile(inp){const f=inp.files[0];if(!f)return;const r=new FileReader();r.onload=()=>applyImport(String(r.result));r.onerror=()=>alert('Lettura non riuscita.');r.readAsText(f);inp.value=''}
-function createEmptyDeck(){deck={version:2,categories:[{id:uid(),title:'Categoria 1',emoji:'📋',cards:[]}],final:null};saveDeck();edCat=deck.categories[0].id;renderAll();openEditor('cards')}
-function removeDeck(){if(!confirm('Rimuovere il mazzo dal dispositivo? Esportalo prima se ti serve.'))return;deck=null;localStorage.removeItem(K.deck);game.completed={};game.fj=null;saveGame();closeM('editorModal');renderAll();broadcast()}
+function importFile(inp){const f=inp.files[0];if(!f)return;const r=new FileReader();r.onload=()=>applyImport(String(r.result));r.onerror=()=>alert('Lettura del file non riuscita.');r.readAsText(f);inp.value=''}
+function createEmptyDeck(){deck={version:3,categories:[{id:uid(),title:'Categoria 1',emoji:'❓',cards:[]}],showdown:null,sudden:[]};saveDeck();edCat=deck.categories[0].id;renderAll();openEditor('cards')}
+function removeDeck(){if(!confirm('Rimuovere il mazzo da questo dispositivo? Esportalo prima se ti serve.'))return;deck=null;localStorage.removeItem(DECK_KEY);game=newGame();saveGame();closeM('editorModal');renderAll();broadcast()}
+function edSdHtml(){
+  return `<p class="text-xs text-slate-400">Una domanda per riga nel formato <code>Domanda | Risposta</code>. A ogni spareggio ne vengono estratte 5 a caso.</p>
+  <textarea id="sdBox" rows="12" class="inp">${esc((deck.sudden||[]).map(x=>x.q+' | '+x.a).join('\n'))}</textarea>
+  <button class="btn btn-amber" onclick="edSaveSd()">💾 Salva domande</button>`;
+}
+function edSaveSd(){deck.sudden=$('sdBox').value.split('\n').map(l=>l.trim()).filter(Boolean).map(l=>{const [q,...r]=l.split('|');return{q:q.trim(),a:r.join('|').trim()}}).filter(x=>x.q);saveDeck();toast('Domande salvate ✓')}
 
 /* =====================================================================
-   9. SYNC LIVE (MQTT) – CONDUTTORE
+   10. SINCRONIZZAZIONE LIVE (MQTT) – lato conduttore
    ===================================================================== */
-let hostId=null,hbTimer=null,hostClients=[];
+let hostId=null,hbTimer=null;
+const hostClients=[];
 const seen=new Map();
-function fjPublic(){
-  const f=game.fj;if(!f||!deck||!deck.final)return null;
-  const num=o=>Object.keys(o).map(Number);
-  return{ph:f.phase,cat:deck.final.category,q:f.phase==='cat'?null:deck.final.question,elig:f.elig,
-    wd:num(f.wagers),ad:num(f.answers),rem:f.phase==='clue'?Math.max(0,f.endAt-Date.now()):0,
-    rv:f.elig.filter(id=>f.judged[id]!==undefined).map(id=>({id,w:f.wagers[id]||0,a:f.answers[id]||'',ok:!!f.judged[id]}))};
-}
+
 function snapshot(){
-  const sp=settings.showScores||game.ended||!!game.fj;
-  const o=cur?{id:cur.id,cat:cur.cat,p:cur.card.points,dd:cur.dd,ph:cur.phase,
-    q:cur.phase==='bet'?null:cur.card.question,a:cur.answering,out:cur.out,ddp:cur.ddPid,bet:cur.bet,
-    rem:(cur.phase==='open'||cur.phase==='answer')?Math.max(0,cur.endAt-Date.now()):0,
-    res:cur.result,rp:cur.rp,ans:cur.phase==='reveal'?cur.card.answer:null}:null;
   return{t:'state',ts:Date.now(),
-    cats:deck?deck.categories.filter(c=>c.cards.length).map(c=>({id:c.id,title:c.title,emoji:c.emoji||'📋',cards:c.cards.slice().sort((a,b)=>a.points-b.points).map(k=>({id:k.id,p:k.points,d:!!game.completed[k.id]}))})):[],
-    open:o,act:game.activeId,
-    players:game.players.map(p=>sp?{id:p.id,n:p.name,dv:p.dv||null,s:p.score}:{id:p.id,n:p.name,dv:p.dv||null}),
-    sc:sp,fj:fjPublic(),ended:!!game.ended};
+    cats:deck?deck.categories.filter(c=>c.cards.length).map(c=>({id:c.id,title:c.title,emoji:c.emoji,cards:c.cards.slice().sort((a,b)=>a.points-b.points).map(k=>({id:k.id,p:k.points,d:!!game.completed[k.id]}))})):[],
+    show:deck&&deck.showdown?{id:'showdown',p:deck.showdown.points,d:!!game.completed.showdown}:null,
+    open:cur?{id:cur.id,cat:cur.catTitle,p:cur.card.points,buzz:cur.buzzed}:null,
+    players:game.players.map(p=>({n:p.name,s:p.score})),
+    ended:!!game.ended,sd:!!sd.active};
 }
 function broadcast(){
   if(!hostId)return;
   const msg=JSON.stringify(snapshot());
-  hostClients.forEach(c=>{if(c.connected)try{c.publish(NS+'/'+hostId+'/s',msg,{qos:0,retain:true})}catch{}});
+  hostClients.forEach(c=>{if(c.connected)try{c.publish('ermact1/'+hostId+'/s',msg,{qos:0,retain:true})}catch{}});
   updateSyncUI();
 }
 function setSync(st){window._sync=st;updateSyncUI()}
 function phoneCount(){const now=Date.now();let n=0;seen.forEach(t=>{if(now-t<20000)n++});return n}
 function updateSyncUI(){
-  const b=$('syncBadge');if(!b)return;const st=window._sync,n=phoneCount();
-  b.textContent=st==='online'?`● Live · ${n} telefoni`:st==='connecting'?'● Connessione…':'● Sync offline';
-  b.style.color=st==='online'?'#2fe0a0':st==='connecting'?'#F4D03F':'#ff6b6b';
+  const b=$('syncBadge');if(!b)return;
+  const st=window._sync,n=phoneCount();
+  b.textContent=st==='online'?`● Live · ${n} connessi`:st==='connecting'?'● Connessione…':'● Sync offline';
+  b.style.color=st==='online'?'#34d399':st==='connecting'?'#fbbf24':'#f87171';
   const q=$('qrCount');if(q)q.textContent=st==='online'?`📶 ${n} telefoni connessi`:'';
 }
 function refreshSync(){setSync(hostClients.some(c=>c.connected)?'online':'connecting')}
 
-/* messaggi dai telefoni */
-function handleJoin(dv,name){
-  name=String(name||'').trim().slice(0,24);if(!name)return;
-  let p=game.players.find(x=>x.dv===dv),changed=false;
-  const taken=n=>game.players.some(x=>x.dv!==dv&&x.name.toLowerCase()===n.toLowerCase()&&x.dv);
-  if(p){if(p.name!==name){p.name=name;changed=true}}
-  else{
-    p=game.players.find(x=>!x.dv&&x.name.toLowerCase()===name.toLowerCase());
-    if(p){p.dv=dv;changed=true}
-    else{let n=name,i=2;while(taken(n))n=name+' '+(i++);p={id:nid(),name:n,score:0,dv};game.players.push(p);if(!pl(game.activeId))game.activeId=p.id;changed=true}
-  }
-  if(changed){commit();toast('📱 '+p.name+' è entrata')}
-}
-function onClientMsg(d){
-  if(!d||!d.dv)return;
-  seen.set(d.dv,Date.now());
-  const p=game.players.find(x=>x.dv===d.dv);
-  switch(d.t){
-    case 'join':handleJoin(d.dv,d.name);break;
-    case 'buzz':if(p)registerBuzz(p.id);break;
-    case 'fjw':{
-      const f=game.fj;if(!p||!f||f.phase!=='cat'||!f.elig.includes(p.id))break;
-      const w=Math.min(p.score,Math.max(0,parseInt(d.w,10)||0));
-      if(f.wagers[p.id]!==w){f.wagers[p.id]=w;saveGame();renderFJ();broadcast()}break}
-    case 'fja':{
-      const f=game.fj;if(!p||!f||f.phase!=='clue'||!f.elig.includes(p.id))break;
-      const a=String(d.a||'').slice(0,120);
-      if(f.answers[p.id]!==a){f.answers[p.id]=a;saveGame();renderFJ();broadcast()}break}
-  }
-  updateSyncUI();
-}
-function initHost(){
+function initHostPeer(){
   if(!window.mqtt){setSync('offline');return}
-  clearInterval(hbTimer);hostClients.forEach(c=>{try{c.end(true)}catch{}});hostClients=[];
-  hostId=load(K.room)||('r'+Math.random().toString(36).slice(2,12));store(K.room,hostId);
+  clearInterval(hbTimer);
+  hostClients.splice(0).forEach(c=>{try{c.end(true)}catch{}});
+  hostId=load(PEER_KEY)||('r'+Math.random().toString(36).slice(2,12));
+  store(PEER_KEY,hostId);
   setSync('connecting');renderQR();
+
   BROKERS.forEach(url=>{
-    const c=mqtt.connect(url,{clientId:'jp-h-'+Math.random().toString(16).slice(2,10),reconnectPeriod:3000,connectTimeout:10000});
+    const c=mqtt.connect(url,{clientId:'erm-h-'+Math.random().toString(16).slice(2,10),reconnectPeriod:3000,connectTimeout:10000});
     hostClients.push(c);
-    c.on('connect',()=>{c.subscribe(NS+'/'+hostId+'/c',{qos:1});refreshSync();broadcast()});
+    c.on('connect',()=>{console.log('HOST broker OK',url);c.subscribe('ermact1/'+hostId+'/p');refreshSync();broadcast()});
     c.on('close',refreshSync);
-    c.on('error',e=>console.warn('HOST broker',url,e&&e.message));
-    c.on('message',(t,payload)=>{try{onClientMsg(JSON.parse(payload.toString()))}catch(e){console.warn(e)}});
+    c.on('error',e=>console.warn('HOST broker errore',url,e&&e.message));
+    c.on('message',(t,payload)=>{
+      try{
+        const d=JSON.parse(payload.toString());
+        if(d&&d.t==='join'&&d.name){
+          const nm=String(d.name).trim().slice(0,30);
+          // un solo giocatore per nome, anche se la richiesta arriva da più broker
+          if(nm&&!game.players.some(p=>p.name.toLowerCase()===nm.toLowerCase())){
+            game.players.push({id:Date.now()+Math.floor(Math.random()*999),name:nm,score:0,found:0,wrong:0});
+            commit();
+          }
+        }else if(d&&d.id){
+          seen.set(d.id,Date.now());updateSyncUI()
+        }
+      }catch{}
+    });
   });
-  hbTimer=setInterval(()=>{const now=Date.now();seen.forEach((t,k)=>{if(now-t>60000)seen.delete(k)});broadcast()},5000);
+
+  hbTimer=setInterval(()=>{
+    const now=Date.now();seen.forEach((t,k)=>{if(now-t>60000)seen.delete(k)});
+    broadcast();
+  },5000);
 }
+document.addEventListener('visibilitychange',()=>{if(!document.hidden&&hostId)broadcast()});
 
 /* --- QR --- */
 const isLocalHost=h=>h===''||h==='localhost'||/^127\./.test(h)||/^192\.168\./.test(h)||/^10\./.test(h)||/^172\.(1[6-9]|2\d|3[01])\./.test(h)||h.endsWith('.local');
+
 function baseUrl(){
-  if(settings.publicUrl){try{const u=new URL(settings.publicUrl);u.search='';u.hash='';return u.toString()}catch{}}
-  if(/^https?:$/.test(location.protocol)&&!isLocalHost(location.hostname))return location.origin+location.pathname;
+  if(settings.publicUrl){
+    try{
+      const u=new URL(settings.publicUrl);
+      u.search='';u.hash='';
+      return u.toString()
+    }catch{}
+  }
+  if(/^https?:$/.test(location.protocol)&&!isLocalHost(location.hostname))
+    return location.origin+location.pathname;
   return '';
 }
-const audUrl=()=>{const b=baseUrl();return b&&hostId?b+'?v='+encodeURIComponent(hostId):''};
-function renderQR(){
-  const box=$('qrBox'),url=audUrl(),warn=$('qrWarn');
-  box.innerHTML='';$('qrUrl').value=url;$('pubUrl').value=settings.publicUrl||'';
-  $('shareBtn').classList.toggle('hidden',!navigator.share);
-  const noBase=!baseUrl();warn.classList.toggle('hidden',!noBase);
-  if(noBase){warn.textContent='⚠️ Questa pagina non è raggiungibile da Internet. Pubblicala su GitHub Pages e incolla qui sotto l\'URL pubblico.';box.textContent=hostId?'Imposta l\'URL pubblico ↓':'Connessione…';return}
-  if(!hostId){box.textContent='Connessione…';return}
-  const size=Math.max(180,Math.min(innerWidth-70,420,innerHeight-380));
-  if(window.QRCode)new QRCode(box,{text:url,width:size,height:size,colorDark:'#060CE9',colorLight:'#ffffff',correctLevel:QRCode.CorrectLevel.M});
-  else box.textContent='Libreria QR non caricata';
-}
-function openQR(){renderQR();updateSyncUI();openM('qrModal')}
-function savePubUrl(){const v=$('pubUrl').value.trim();if(v){try{new URL(v)}catch{return alert('URL non valido (deve iniziare con https://).')}}settings.publicUrl=v;store(K.set,settings);renderQR();toast('URL salvato ✓')}
-function copyAudUrl(){const u=audUrl();if(!u)return toast('Imposta prima l\'URL pubblico');navigator.clipboard.writeText(u).then(()=>toast('Link copiato ✓'),()=>toast('Copia non riuscita'))}
-function shareAudUrl(){const u=audUrl();if(u&&navigator.share)navigator.share({title:'Jeopardy!',url:u}).catch(()=>{})}
 
-/* --- Wake lock --- */
-let wl=null;
-function setBanner(x){$('hostBannerTxt').textContent='📱 Tieni questa scheda in primo piano: se il browser la sospende, i telefoni smettono di aggiornarsi. '+x;$('hostBanner').classList.remove('hidden')}
-async function getWakeLock(){
-  if(!('wakeLock' in navigator)){setBanner('⚠️ Il browser non può tenere lo schermo acceso: disattiva lo spegnimento automatico.');return}
-  try{wl=await navigator.wakeLock.request('screen');setBanner('🔒 Schermo mantenuto acceso.');wl.addEventListener('release',()=>{wl=null})}
-  catch(e){setBanner('⚠️ Impossibile bloccare lo spegnimento dello schermo.')}
+const audUrl=()=>{
+  const b=baseUrl();
+  return b&&hostId ? b+'?v='+encodeURIComponent(hostId) : '';
+};
+
+function renderQR(){
+  const box=$('qrBox'), url=audUrl(), warn=$('qrWarn');
+  box.innerHTML='';
+  $('qrUrl').value=url;
+  $('pubUrl').value=settings.publicUrl||'';
+  $('shareBtn').classList.toggle('hidden',!navigator.share);
+  
+  const noBase=!baseUrl();
+  warn.classList.toggle('hidden',!noBase);
+  
+  if(noBase){
+    warn.textContent='⚠️ Questa pagina non è raggiungibile da Internet. Pubblicala su GitHub Pages e incolla qui sotto l\'URL pubblico.';
+    box.textContent=hostId?'Imposta l\'URL pubblico ↓':'Connessione in corso…';
+    return;
+  }
+  
+  if(!hostId){
+    box.textContent='Connessione in corso…';
+    return;
+  }
+  
+  const size=Math.max(180,Math.min(innerWidth-70,420,innerHeight-380));
+  if(window.QRCode)
+    new QRCode(box,{text:url,width:size,height:size,colorDark:'#0f0c1b',colorLight:'#ffffff',correctLevel:QRCode.CorrectLevel.M});
+  else 
+    box.textContent='Libreria QR non caricata';
 }
-document.addEventListener('visibilitychange',()=>{if(document.hidden||$('hostApp').classList.contains('hidden'))return;if(!wl)getWakeLock();if(hostId)broadcast()});
-document.addEventListener('click',()=>{if(!$('hostApp').classList.contains('hidden')&&!wl&&'wakeLock' in navigator)getWakeLock()},{passive:true});
+
+function openQR(){if(!needDeck())return;renderQR();updateSyncUI();openM('qrModal')}
+function savePubUrl(){
+  const v=$('pubUrl').value.trim();
+  if(v){try{new URL(v)}catch{return alert('URL non valido (deve iniziare con https://).')}}
+  settings.publicUrl=v;
+  store(SET_KEY,settings);
+  renderQR();
+  toast('URL salvato ✓')
+}
+function copyAudUrl(){
+  const u=audUrl();
+  if(!u)return toast('Imposta prima l\'URL pubblico');
+  navigator.clipboard.writeText(u).then(()=>toast('Link copiato ✓'),()=>toast('Copia non riuscita'))
+}
+function shareAudUrl(){
+  const u=audUrl();
+  if(u&&navigator.share) navigator.share({title:'Erm, Actually!',url:u}).catch(()=>{})
+}
+
+/* --- Screen Wake Lock --- */
+let wl=null;
+function setBanner(extra){
+  $('hostBannerTxt').textContent='📱 Tieni questa scheda in primo piano: se il browser sospende la pagina, i telefoni dei concorrenti smettono di aggiornarsi. '+extra;
+  $('hostBanner').classList.remove('hidden')
+}
+async function getWakeLock(){
+  if(!('wakeLock' in navigator)){
+    setBanner('⚠️ Il tuo browser non può tenere lo schermo acceso da solo: disattiva lo spegnimento automatico nelle impostazioni del telefono.');
+    return
+  }
+  try{
+    wl=await navigator.wakeLock.request('screen');
+    setBanner('🔒 Schermo mantenuto acceso.');
+    wl.addEventListener('release',()=>{wl=null})
+  } catch(e){
+    setBanner('⚠️ Impossibile bloccare lo spegnimento dello schermo: tienilo acceso manualmente.')
+  }
+}
+document.addEventListener('visibilitychange',()=>{
+  if(document.hidden||$('hostApp').classList.contains('hidden'))return;
+  if(!wl) getWakeLock();
+  broadcast()
+});
+document.addEventListener('click',()=>{
+  if(!$('hostApp').classList.contains('hidden')&&!wl&&'wakeLock' in navigator) getWakeLock()
+},{passive:true});
 
 /* =====================================================================
-   10. VISTA CONCORRENTI
+   11. VISTA CONCORRENTI – TEMI & ANIMAZIONI
    ===================================================================== */
-const A={base:'',dev:'',name:'',cl:[],me:null,state:null,lastTs:0,lastLive:0,gotAny:false,buzzAt:0,openKey:'',fjKey:'',endAt:0,auto:false,seenMe:false,confetti:false,myW:null,myA:'',lastScore:null};
-function audSend(obj){
-  const msg=JSON.stringify(Object.assign({dv:A.dev},obj));
-  A.cl.forEach(c=>{if(c.connected)try{c.publish(A.base+'/c',msg,{qos:1})}catch{}});
+const AUD_THEMES=[
+  {id:'kawaii', name:'Kawaii Pastel', emoji:'🧸'},
+  {id:'strawberry', name:'Strawberry Milk', emoji:'🍓'},
+  {id:'unicorn', name:'Unicorn Magic', emoji:'🦄'},
+  {id:'floral', name:'Floral Garden', emoji:'🌷'},
+  {id:'bubbletea', name:'Bubble Tea', emoji:'🧋'},
+  {id:'disney', name:'Principessa Disney', emoji:'👑'},
+  {id:'coquette', name:'Coquette Bow', emoji:'🎀'},
+  {id:'country', name:'Country Club', emoji:'⛳'},
+  {id:'neon', name:'Neon Tokyo', emoji:'🏮'},
+  {id:'vinyl', name:'Vintage Vinyl', emoji:'🎵'},
+  {id:'space', name:'Space Odyssey', emoji:'🚀'},
+  {id:'ocean', name:'Ocean Deep', emoji:'🌊'},
+  {id:'fireice', name:'Fire & Ice', emoji:'🔥❄️'},
+  {id:'minimal', name:'Minimal Black', emoji:'🖤'},
+  {id:'popart', name:'Pop Art', emoji:'🎭'},
+  {id:'forest', name:'Forest Mood', emoji:'🌲'},
+  {id:'golden', name:'Golden Hour', emoji:'☀️'},
+  {id:'cybergrid', name:'Cyber Grid', emoji:'💾'},
+  {id:'lavender', name:'Lavender Haze', emoji:'💜'},
+  {id:'candy', name:'Candy Crush', emoji:'🍬'},
+  {id:'gameshow', name:'Neon Game Show', emoji:'📺'},
+  {id:'arcade', name:'Retro Arcade', emoji:'🕹️'},
+  {id:'modern', name:'Minimal Modern', emoji:'🍸'},
+  {id:'casino', name:'Casino Cyberpunk', emoji:'🎰'},
+  {id:'native', name:'Mobile Native', emoji:'📱'}
+];
+let currentTheme=load('erm_aud_theme')||'';
+
+let audMe=null;       // nome giocatore corrente su questo telefono
+let joinScreen=null, joinName=null, joinBtn=null, myScore=null;
+
+const aud={key:null,cols:{},tiles:{},timers:{},banner:'',last:0,confetti:false};
+
+function initThemes(){
+  const saved=load('erm_aud_theme');
+  if(saved && AUD_THEMES.some(t=>t.id===saved)){
+    applyTheme(saved);
+  }
 }
-const sendJoin=()=>audSend({t:'join',name:A.name});
-function joinNow(){
-  const n=$('joinName').value.trim().slice(0,24);if(!n)return toast('Scrivi il nome della squadra');
-  A.name=n;A.auto=true;store(K.name,n);sendJoin();$('joinBtn').textContent='Connessione…';
+function applyTheme(id){
+  AUD_THEMES.forEach(t=>document.body.classList.remove('theme-'+t.id));
+  if(id&&id!=='default')document.body.classList.add('theme-'+id);
+  currentTheme=id;
+  store('erm_aud_theme',id);
 }
-function audStatus(st){
+function setTheme(id){
+  applyTheme(id);
+  toast('Tema applicato');
+  closeM('themeModal');
+}
+function renderThemeList(){
+  const list=$('themeList');if(!list)return;
+  list.innerHTML=AUD_THEMES.map(t=>`
+    <label class="cursor-pointer block">
+      <div class="flex items-center gap-3 p-3 rounded-2xl bg-slate-900/60 border border-slate-700/50 hover:border-amber-500/50 transition-all group ${currentTheme===t.id?'ring-2 ring-amber-500 bg-slate-800':''}" onclick="setTheme('${t.id}')">
+        <span class="text-2xl">${t.emoji}</span>
+        <div class="flex-1 min-w-0">
+          <div class="font-bold text-sm text-slate-200 truncate">${t.name}</div>
+          <div class="h-1 w-full bg-slate-800 rounded-full mt-1 overflow-hidden">
+            <div class="h-full bg-gradient-to-r from-amber-400 to-pink-500 ${currentTheme===t.id?'w-full':'w-1/3'}"></div>
+          </div>
+        </div>
+      </div>
+    </label>
+  `).join('');
+}
+function openThemeModal(){
+  renderThemeList();
+  openM('themeModal');
+}
+
+// Tap Jelly sulle tessere concorrenti
+const audBoard=$('audBoard');
+if(audBoard){
+  audBoard.addEventListener('click',e=>{
+    const tile=e.target.closest('.aud-tile');
+    if(!tile)return;
+    tile.classList.remove('jelly-tap');
+    void tile.offsetWidth;
+    tile.classList.add('jelly-tap');
+  });
+}
+
+function audStatus(st,extra){
   const b=$('audStatus');if(!b)return;
-  const T={online:['● Live','#2fe0a0'],connecting:['● Connessione…','#F4D03F'],nohost:['● Host non trovato…','#ff6b6b'],offline:['● Riconnessione…','#ff6b6b']};
+  const T={
+    online:['● Live','#34d399'],
+    connecting:['● Connessione…','#fbbf24'],
+    nohost:['● Host non trovato…','#f87171'],
+    ice:['● Rete bloccata ('+(extra||'?')+')','#f87171'],
+    offline:['● Riconnessione…','#f87171']
+  };
   const [t,c]=T[st]||T.offline;b.textContent=t;b.style.color=c;
 }
+
+function setColGone(id,gone){
+  const col=aud.cols[id];if(!col)return;clearTimeout(aud.timers[id]);
+  if(gone){col.classList.add('col-gone');aud.timers[id]=setTimeout(()=>{col.style.display='none'},750)}
+  else{col.style.display='';void col.offsetWidth;col.classList.remove('col-gone')}
+}
+
+function audRender(s){
+  if(!s || !s.cats) return;
+  $('audWait').classList.add('hidden');
+
+  const mine=(audMe||'').toLowerCase();
+  const me=mine?(s.players||[]).find(x=>String(x.n).toLowerCase()===mine):null;
+
+  // Nascondi schermata ingresso quando l'host conferma il giocatore
+  if(me && joinScreen && !joinScreen.classList.contains('hidden')){
+    joinScreen.classList.add('hidden');
+    $('audBoard').classList.remove('hidden');
+  }
+
+  // Punteggio personale: solo se l'host mostra i punteggi
+  if(myScore){
+    if(me && typeof me.s==='number'){
+      const txt=`💰 ${me.s}`;
+      myScore.classList.remove('hidden');
+      if(myScore.textContent!==txt){
+        myScore.textContent=txt;
+        myScore.classList.add('score-pop');
+        setTimeout(()=>myScore.classList.remove('score-pop'),350);
+      }
+    }else myScore.classList.add('hidden');
+  }
+  if(s.ended){
+    ['audBoard','audShow','audDone','audScores'].forEach(i=>$(i).classList.add('hidden'));
+    $('audBanner').innerHTML='';aud.banner='';aud.key=null;
+    const f=$('audFinal');f.classList.remove('hidden');
+    f.innerHTML=`<h2 class="font-heading text-3xl font-black text-amber-400">🏆 Classifica finale</h2>${podiumHtml((s.players||[]).map(p=>({name:p.n,score:p.s})))}`;
+    if(!aud.confetti){aud.confetti=true;fireConfetti()}return;
+  }
+  aud.confetti=false;$('audFinal').classList.add('hidden');
+  const board=$('audBoard');
+  const key=s.cats.map(c=>c.id+':'+c.cards.map(k=>k.id).join(',')).join('|');
+  if(key!==aud.key){
+    aud.key=key;aud.cols={};aud.tiles={};board.classList.add('no-anim');
+    board.innerHTML=s.cats.map(c=>`<div class="aud-col" data-cat="${esc(c.id)}"><div class="aud-head glass"><div class="text-xl">${esc(c.emoji)}</div><div class="aud-title">${esc(c.title)}</div></div>${c.cards.map(k=>`<div class="aud-tile" data-id="${esc(k.id)}">${k.p}</div>`).join('')}</div>`).join('');
+    board.querySelectorAll('.aud-col').forEach(e=>aud.cols[e.dataset.cat]=e);
+    board.querySelectorAll('.aud-tile').forEach(e=>aud.tiles[e.dataset.id]=e);
+    requestAnimationFrame(()=>requestAnimationFrame(()=>board.classList.remove('no-anim')));
+  }
+  let anyCat=false;
+  s.cats.forEach(c=>{
+    const all=c.cards.every(k=>k.d);if(!all)anyCat=true;setColGone(c.id,all);
+    c.cards.forEach(k=>{const t=aud.tiles[k.id];if(!t)return;t.classList.toggle('tile-gone',k.d);t.classList.toggle('tile-open',!!(s.open&&s.open.id===k.id))});
+  });
+  board.classList.toggle('hidden',!s.cats.length);
+  const sh=$('audShow');
+  if(s.show){sh.classList.remove('hidden');sh.textContent='🔥 SHOWDOWN '+s.show.p;sh.classList.toggle('show-gone',s.show.d);sh.classList.toggle('tile-open',!!(s.open&&s.open.id==='showdown'))}
+  else sh.classList.add('hidden');
+  $('audDone').classList.toggle('hidden',!(!anyCat&&(!s.show||s.show.d)));
+  let b='';
+  if(s.sd)b+=`<div class="p-3 rounded-xl bg-red-950/60 border border-red-700 text-center font-heading font-black text-red-300 mb-2 banner-in">⚔️ SPAREGGIO IN CORSO!</div>`;
+  if(s.open)b+=s.open.buzz?`<div class="p-3 rounded-xl bg-amber-400 text-slate-950 text-center font-heading font-black text-xl mb-2 banner-in">🚨 ERM, ACTUALLY!</div>`:`<div class="p-3 rounded-xl bg-purple-950/60 border border-purple-700 text-purple-200 text-center font-heading font-bold mb-2 banner-in">Tessera in gioco: ${esc(s.open.cat)} · ${s.open.p}</div>`;
+  if(b!==aud.banner){aud.banner=b;$('audBanner').innerHTML=b}
+  const sc=$('audScores');
+  if(s.players&&s.players.some(p=>typeof p.s==='number')){sc.classList.remove('hidden');sc.innerHTML=`<div class="glass rounded-2xl p-4 space-y-2"><h3 class="font-heading font-bold text-amber-400">Classifica</h3>`+s.players.slice().sort((a,b)=>b.s-a.s).map((p,i)=>`<div class="flex justify-between text-sm"><span>${i===0&&p.s>0?'👑 ':''}${esc(p.n)}</span><b class="text-amber-300">${p.s}</b></div>`).join('')+`</div>`}
+  else{sc.classList.add('hidden');sc.innerHTML=''}
+}
+
 function startAudience(room){
-  A.base=NS+'/'+room;
-  A.dev=load(K.dev)||uid();store(K.dev,A.dev);
-  A.name=load(K.name)||'';A.auto=!!A.name;
-  $('joinName').value=A.name;
-  if(A.name)$('joinScreen').classList.add('hidden');
-  const status=()=>{
-    if(!A.cl.some(c=>c.connected)){audStatus('connecting');return}
-    audStatus(Date.now()-A.lastLive<15000?'online':(A.gotAny?'offline':'nohost'));
+  const base='ermact1/'+room,me='p'+Math.random().toString(36).slice(2,9);
+  const cl=[];let lastLive=0,lastTs=0,gotAny=false;
+
+  joinScreen=$('joinScreen');
+  joinName=$('joinName');
+  joinBtn=$('joinBtn');
+  myScore=$('myScore');
+
+  // Nascondi tabellone, mostra ingresso
+  if(joinScreen){joinScreen.classList.remove('hidden')}
+  $('audBoard').classList.add('hidden');
+  $('audShow').classList.add('hidden');
+
+  const tryEnter=()=>{
+    const name=joinName.value.trim();
+    if(!name)return;
+    joinBtn.disabled=true;
+    joinBtn.textContent='Connessione…';
+    audMe=name;
+    cl.forEach(c=>{if(c.connected)try{c.publish(base+'/p',JSON.stringify({t:'join',name:name}),{qos:0})}catch{}});
   };
+  if(joinBtn)joinBtn.onclick=tryEnter;
+  if(joinName)joinName.addEventListener('keypress',e=>{if(e.key==='Enter')tryEnter()});
+
+  const status=()=>{
+    if(!cl.some(c=>c.connected)){audStatus('connecting');return}
+    audStatus(Date.now()-lastLive<15000?'online':(gotAny?'offline':'nohost'));
+  };
+  const ping=()=>cl.forEach(c=>{if(c.connected)try{c.publish(base+'/p',JSON.stringify({id:me}),{qos:0})}catch{}});
+
   BROKERS.forEach(url=>{
-    const c=mqtt.connect(url,{clientId:'jp-c-'+Math.random().toString(16).slice(2,10),reconnectPeriod:3000,connectTimeout:10000});
-    A.cl.push(c);
-    c.on('connect',()=>{c.subscribe(A.base+'/s',{qos:0});audSend({t:'ping'});if(A.auto&&A.name&&!A.me)sendJoin();status()});
+    const c=mqtt.connect(url,{clientId:'erm-c-'+Math.random().toString(16).slice(2,10),reconnectPeriod:3000,connectTimeout:10000});
+    cl.push(c);
+    c.on('connect',()=>{console.log('CLIENT broker OK',url);c.subscribe(base+'/s');ping();status()});
     c.on('close',status);
-    c.on('error',e=>console.warn('CLIENT broker',url,e&&e.message));
+    c.on('error',e=>console.warn('CLIENT broker errore',url,e&&e.message));
     c.on('message',(t,payload,packet)=>{
       let d;try{d=JSON.parse(payload.toString())}catch{return}
       if(!d||d.t!=='state')return;
-      if(d.ts&&d.ts<A.lastTs)return;
-      A.lastTs=d.ts||A.lastTs;A.gotAny=true;
-      if(!packet.retain)A.lastLive=Date.now();
+      if(d.ts&&d.ts<lastTs)return;
+      lastTs=d.ts||lastTs;gotAny=true;
+      if(!packet.retain)lastLive=Date.now();
+      aud.last=Date.now();
       audRender(d);status();
     });
   });
-  setInterval(()=>{audSend({t:'ping'});status()},5000);
-  setInterval(()=>{if(A.auto&&A.name&&!A.me)sendJoin()},2500);
-  setInterval(audTick,250);
-  document.addEventListener('visibilitychange',()=>{if(!document.hidden){audSend({t:'ping'});status()}});
+
+  setInterval(()=>{     ping();status();     // finché l'host non mi ha registrato, ripeto la richiesta di join     if(audMe&&joinScreen&&!joinScreen.classList.contains('hidden'))tryEnter();   },5000);
+  document.addEventListener('visibilitychange',()=>{if(!document.hidden){ping();status()}});
   audStatus('connecting');
-}
-function audTick(){
-  const el=$('audTimer');
-  const left=A.endAt?Math.max(0,Math.ceil((A.endAt-Date.now())/1000)):-1;
-  if(el){el.textContent=left>=0?'⏱ '+left+'s':'';el.classList.toggle('danger',left>=0&&left<=3)}
-  const fe=$('fjPhoneTimer');if(fe){fe.textContent=left>=0?'⏱ '+left+'s':'';fe.classList.toggle('danger',left>=0&&left<=5)}
-}
-function triggerBuzz(){
-  const s=A.state;if(!s||!s.open||s.open.ph!=='open'||!A.me)return;
-  if(A.buzzAt&&Date.now()-A.buzzAt<1500)return;
-  A.buzzAt=Date.now();vib(60);playSound('buzz');audSend({t:'buzz'});audRender(s);
-  setTimeout(()=>{if(A.state)audRender(A.state)},1600);
-}
-function audRender(s){
-  A.state=s;
-  $('audWait').classList.add('hidden');
-  const me=(s.players||[]).find(p=>p.dv===A.dev)||null;A.me=me;
-  if(me){A.seenMe=true;$('joinScreen').classList.add('hidden')}
-  else{
-    if(A.seenMe){A.seenMe=false;A.auto=false;$('joinBtn').textContent='Entra'}   // rimossa dal conduttore: niente rientro automatico
-    $('joinScreen').classList.remove('hidden');
-  }
-  $('audTeam').textContent=me?me.n:'';
-  const sc=$('audScore');
-  if(me&&typeof me.s==='number'){
-    sc.classList.remove('hidden');
-    const txt='💰 '+me.s;
-    if(sc.textContent!==txt){sc.textContent=txt;sc.classList.remove('score-pop');void sc.offsetWidth;sc.classList.add('score-pop')}
-  }else sc.classList.add('hidden');
-  ['audBoard','audPlay','audFJ','audFinal','audScores'].forEach(i=>$(i).classList.add('hidden'));
-  A.endAt=0;
-  if(!me)return;
-  if(s.ended){renderAudFinal(s);return}
-  if(s.fj){renderAudFJ(s,me);return}
-  if(s.open)renderAudPlay(s,me);else renderAudBoard(s);
-  renderAudScores(s,me);
-}
-function renderAudBoard(s){
-  const b=$('audBoard');b.classList.remove('hidden');
-  if(!s.cats.length){b.innerHTML='<p class="text-center muted mt-10">Il conduttore sta preparando il tabellone…</p>';return}
-  const act=(s.players||[]).find(p=>p.id===s.act);
-  b.innerHTML=(act?`<div class="text-center mb-3"><span class="small muted">Sceglie la tessera</span><div class="font-serif font-black text-xl gold">${esc(act.n)}</div></div>`:'')+
-    `<div class="flex gap-2 sm:gap-3 justify-center">`+s.cats.map(c=>`<div class="aud-col"><div class="cat-head"><div class="text-xl">${esc(c.emoji)}</div><div class="aud-title">${esc(c.title)}</div></div>${c.cards.map(k=>`<div class="aud-tile ${k.d?'tile-gone':''}">${k.p}</div>`).join('')}</div>`).join('')+`</div>`;
-}
-function renderAudPlay(s,me){
-  const o=s.open,P=id=>{const p=(s.players||[]).find(x=>x.id===id);return p?esc(p.n):'?'};
-  $('audPlay').classList.remove('hidden');
-  $('audCat').innerHTML=esc(o.cat)+(o.dd?' <span class="badge-dd">DAILY DOUBLE</span>':'');
-  $('audPts').textContent=o.dd&&o.bet?'Puntata: '+o.bet:o.p;
-  $('audQuestion').textContent=o.q||'';$('audQuestion').classList.toggle('hidden',!o.q);
-  A.endAt=o.rem?Date.now()+o.rem:0;
-  const key=o.id+'|'+o.ph+'|'+(o.a||'')+'|'+o.out.length;
-  if(key!==A.openKey){A.openKey=key;A.buzzAt=0}
-  const btn=$('buzzBtn'),msg=$('audMsg'),ans=$('audAnswer');
-  let cls='waiting',label='ATTENDI…',dis=true,m='';
-  if(o.ph==='bet'){m=`Daily Double! ${P(o.ddp)} sta puntando…`}
-  else if(o.ph==='read'){m='Ascolta la domanda: il buzzer si apre a breve'}
-  else if(o.ph==='open'){
-    if(o.out.includes(me.id)){cls='late';label='ELIMINATO';m='Hai già sbagliato su questa domanda'}
-    else if(A.buzzAt&&Date.now()-A.buzzAt<1500){label='…';m='Prenotazione inviata'}
-    else{cls='';label='BUZZER!';dis=false;m='Premi per prenotarti!'}
-  }else if(o.ph==='answer'){
-    if(o.a===me.id){cls='first';label='TOCCA A TE';m='Rispondi a voce!'}
-    else m=o.dd?`${P(o.a)} risponde (Daily Double, puntata ${o.bet})`:`${P(o.a)} sta rispondendo…`;
-  }
-  btn.className='buzz-big '+cls;btn.textContent=label;btn.disabled=dis;
-  msg.textContent=m;
-  $('audBuzzWrap').classList.toggle('hidden',o.ph==='reveal'||o.ph==='bet');
-  ans.classList.toggle('hidden',o.ph!=='reveal');
-  if(o.ph==='reveal'){
-    let r='⏰ Nessuno ha risposto';
-    if(o.res==='right')r=`✅ ${P(o.rp)} risponde correttamente`;else if(o.res==='wrong')r=`❌ ${P(o.rp)} sbaglia`;
-    ans.innerHTML=`<div class="small gold">Risposta</div><div class="font-serif font-black text-2xl my-2">${esc(o.ans||'')}</div><div class="font-bold">${r}</div>`;
-  }
-}
-function renderAudScores(s,me){
-  const el=$('audScores');
-  if(!s.sc||!(s.players||[]).some(p=>typeof p.s==='number')){el.classList.add('hidden');return}
-  el.classList.remove('hidden');
-  el.innerHTML=`<div class="glass rounded-2xl p-4 space-y-2"><h3 class="font-serif font-bold gold">Classifica</h3>`+s.players.slice().sort((a,b)=>b.s-a.s).map((p,i)=>`<div class="flex justify-between text-sm ${me&&p.id===me.id?'gold font-bold':''}"><span>${i===0&&p.s>0?'👑 ':''}${esc(p.n)}</span><b>${p.s}</b></div>`).join('')+`</div>`;
-}
-function fjSendW(){const v=parseInt($('fjW').value,10);if(isNaN(v)||v<0)return toast('Puntata non valida');A.myW=v;audSend({t:'fjw',w:v});toast('Puntata inviata ✓');vib(40)}
-function fjSendA(){const v=$('fjA').value.trim();if(!v)return toast('Scrivi una risposta');A.myA=v;audSend({t:'fja',a:v});toast('Risposta inviata ✓');vib(40)}
-function renderAudFJ(s,me){
-  const f=s.fj,box=$('audFJ');box.classList.remove('hidden');
-  const el=f.elig.includes(me.id),didW=f.wd.includes(me.id),didA=f.ad.includes(me.id);
-  A.endAt=f.rem?Date.now()+f.rem:0;
-  const key=[f.ph,el,didW,didA,f.rv.length,f.q?1:0].join('|');
-  if(key===A.fjKey)return;   // niente re-render: non cancello quello che stai scrivendo
-  A.fjKey=key;
-  let h=`<div class="text-center font-serif font-black text-2xl gold">⚡ FINAL JEOPARDY</div><div class="card-question"><div class="small gold">Categoria</div>${esc(f.cat)}</div>`;
-  if(f.q)h+=`<div class="card-question">${esc(f.q)}</div>`;
-  if(!el)h+=`<div class="box text-center">Non partecipi al Final (serve un punteggio positivo). Guarda lo schermo! 👀</div>`;
-  else if(f.ph==='cat'){
-    h+=didW?`<div class="box text-center">✅ Puntata inviata${A.myW!==null?': <b class="gold">'+A.myW+'</b>':''}<br><span class="muted text-sm">Attendi l'indizio…</span></div>`
-      :`<div class="box space-y-3"><div class="small gold">La tua puntata segreta</div><input id="fjW" type="number" inputmode="numeric" min="0" ${typeof me.s==='number'?'max="'+me.s+'" placeholder="0 – '+me.s+'"':''} class="inp text-center text-xl"><button class="btn btn-gold w-full !py-3" onclick="fjSendW()">Invia puntata</button></div>`;
-  }else if(f.ph==='clue'){
-    h+=`<div id="fjPhoneTimer" class="timer text-center"></div><div class="box space-y-3"><div class="small gold">La tua risposta</div><input id="fjA" type="text" maxlength="120" value="${esc(A.myA)}" class="inp text-lg" placeholder="Scrivi qui…"><button class="btn btn-gold w-full !py-3" onclick="fjSendA()">${didA?'Aggiorna risposta':'Invia risposta'}</button>${didA?'<div class="text-center text-sm gold">✅ Risposta inviata</div>':''}</div>`;
-  }else{
-    h+=`<div class="box text-center muted">Il conduttore sta giudicando…</div>`;
-  }
-  if(f.ph==='judge'&&f.rv.length){
-    h+=`<div class="space-y-2">`+f.rv.map(r=>{const p=(s.players||[]).find(x=>x.id===r.id);return `<div class="box"><div class="flex justify-between"><b>${esc(p?p.n:'?')}</b><span class="gold font-bold">Puntata ${r.w}</span></div><div class="font-serif">«${esc(r.a||'—')}»</div><div class="font-bold ${r.ok?'text-green-400':'text-red-400'}">${r.ok?'✅ Giusta':'❌ Sbagliata'}</div></div>`}).join('')+`</div>`;
-  }
-  box.innerHTML=h;
-}
-function renderAudFinal(s){
-  const f=$('audFinal');f.classList.remove('hidden');
-  f.innerHTML=`<h2 class="font-serif font-black text-3xl gold">🏆 Classifica finale</h2>${podiumHtml((s.players||[]).map(p=>({name:p.n,score:p.s||0})))}`;
-  if(!A.confetti){A.confetti=true;fireConfetti()}
+  initThemes();
 }
 
 /* =====================================================================
-   11. AVVIO
+   12. AVVIO
    ===================================================================== */
+initSparks();
 const viewId=new URLSearchParams(location.search).get('v');
 if(viewId){
   $('hostApp').classList.add('hidden');$('audApp').classList.remove('hidden');
   if(window.mqtt)startAudience(viewId);
-  else $('audWait').innerHTML='<p class="text-red-300">Impossibile caricare la libreria MQTT: controlla la connessione.</p>';
+  else $('audWait').innerHTML='<p class="text-red-400">Impossibile caricare la libreria MQTT: controlla la connessione.</p>';
 }else{
-  saveGame();renderAll();initHost();getWakeLock();
-  if(game.fj)startTick();
+  renderAll();initHostPeer();getWakeLock();
 }
 </script>
 </body>
