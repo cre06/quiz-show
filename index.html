@@ -1100,31 +1100,41 @@ document.addEventListener('visibilitychange',()=>{
 document.addEventListener('click',()=>{
   if(!$('hostApp').classList.contains('hidden')&&!wl&&'wakeLock' in navigator) getWakeLock()
 },{passive:true});
-/* =====================================================================
+  /* =====================================================================
    11. VISTA CONCORRENTI (smartphone)
    ===================================================================== */
 const aud={key:null,cols:{},tiles:{},timers:{},banner:'',last:0,confetti:false};
+
 function audStatus(st){
   const b=$('audStatus');
+  if(!b) return;
   b.textContent=st==='online'?'● Live':st==='connecting'?'● Connessione…':'● Riconnessione…';
   b.style.color=st==='online'?'#34d399':st==='connecting'?'#fbbf24':'#f87171';
 }
+
 function setColGone(id,gone){
   const col=aud.cols[id];if(!col)return;clearTimeout(aud.timers[id]);
   if(gone){col.classList.add('col-gone');aud.timers[id]=setTimeout(()=>{col.style.display='none'},750)}
   else{col.style.display='';void col.offsetWidth;col.classList.remove('col-gone')}
 }
+
 function audRender(s){
+  if(!s || !s.cats) return; // Sicurezza: se non ci sono dati, non fare nulla
+  
   $('audWait').classList.add('hidden');
+  
   if(s.ended){
-    ['audBoard','audShow','audDone','audScores'].forEach(i=>$(i).classList.add('hidden'));$('audBanner').innerHTML='';aud.banner='';aud.key=null;
+    ['audBoard','audShow','audDone','audScores'].forEach(i=>$(i).classList.add('hidden'));
+    $('audBanner').innerHTML='';aud.banner='';aud.key=null;
     const f=$('audFinal');f.classList.remove('hidden');
     f.innerHTML=`<h2 class="font-heading text-3xl font-black text-amber-400">🏆 Classifica finale</h2>${podiumHtml((s.players||[]).map(p=>({name:p.n,score:p.s})))}`;
     if(!aud.confetti){aud.confetti=true;fireConfetti()}return;
   }
+  
   aud.confetti=false;$('audFinal').classList.add('hidden');
   const board=$('audBoard');
-  // (Ri)costruzione struttura solo se cambiano categorie/tessere; altrimenti aggiornamento in-place (animazioni fluide)
+  
+  // (Ri)costruzione struttura solo se cambiano categorie/tessere
   const key=s.cats.map(c=>c.id+':'+c.cards.map(k=>k.id).join(',')).join('|');
   if(key!==aud.key){
     aud.key=key;aud.cols={};aud.tiles={};board.classList.add('no-anim');
@@ -1133,54 +1143,103 @@ function audRender(s){
     board.querySelectorAll('.aud-tile').forEach(e=>aud.tiles[e.dataset.id]=e);
     requestAnimationFrame(()=>requestAnimationFrame(()=>board.classList.remove('no-anim')));
   }
+  
   let anyCat=false;
   s.cats.forEach(c=>{
     const all=c.cards.every(k=>k.d);if(!all)anyCat=true;setColGone(c.id,all);
     c.cards.forEach(k=>{const t=aud.tiles[k.id];if(!t)return;t.classList.toggle('tile-gone',k.d);t.classList.toggle('tile-open',!!(s.open&&s.open.id===k.id))});
   });
+  
   board.classList.toggle('hidden',!s.cats.length);
   const sh=$('audShow');
   if(s.show){sh.classList.remove('hidden');sh.textContent='🔥 SHOWDOWN '+s.show.p;sh.classList.toggle('show-gone',s.show.d);sh.classList.toggle('tile-open',!!(s.open&&s.open.id==='showdown'))}
   else sh.classList.add('hidden');
+  
   $('audDone').classList.toggle('hidden',!(!anyCat&&(!s.show||s.show.d)));
-  // Banner (aggiornato solo se cambia, per non rilanciare l'animazione)
+  
+  // Banner
   let b='';
   if(s.sd)b+=`<div class="p-3 rounded-xl bg-red-950/60 border border-red-700 text-center font-heading font-black text-red-300 mb-2 banner-in">⚔️ SPAREGGIO IN CORSO!</div>`;
   if(s.open)b+=s.open.buzz?`<div class="p-3 rounded-xl bg-amber-400 text-slate-950 text-center font-heading font-black text-xl mb-2 banner-in">🚨 ERM, ACTUALLY!</div>`:`<div class="p-3 rounded-xl bg-purple-950/60 border border-purple-700 text-purple-200 text-center font-heading font-bold mb-2 banner-in">Tessera in gioco: ${esc(s.open.cat)} · ${s.open.p}</div>`;
   if(b!==aud.banner){aud.banner=b;$('audBanner').innerHTML=b}
+  
   const sc=$('audScores');
   if(s.players){sc.classList.remove('hidden');sc.innerHTML=`<div class="glass rounded-2xl p-4 space-y-2"><h3 class="font-heading font-bold text-amber-400">Classifica</h3>`+s.players.slice().sort((a,b)=>b.s-a.s).map((p,i)=>`<div class="flex justify-between text-sm"><span>${i===0&&p.s>0?'👑 ':''}${esc(p.n)}</span><b class="text-amber-300">${p.s}</b></div>`).join('')+`</div>`}
   else{sc.classList.add('hidden');sc.innerHTML=''}
 }
+
 function startAudience(hostId){
   let peer=null,conn=null,timer=null;
+  
   const retry=()=>{clearTimeout(timer);timer=setTimeout(connect,3000)};
+  
   function makePeer(){
+    console.log("Client: Creazione Peer...");
     peer=new Peer(undefined,PEER_OPTS);
-    peer.on('open',connect);
+    
+    peer.on('open', () => {
+      console.log("Client: Peer aperto, tentativo di connessione a:", hostId);
+      connect();
+    });
+    
     peer.on('disconnected',()=>{try{peer.reconnect()}catch{}});
+    
     peer.on('error',e=>{
+      console.warn("Client Peer Error:", e.type);
       audStatus('offline');
-      if(e.type==='peer-unavailable')return retry();   // conduttore non ancora online: "In attesa del conduttore…"
+      if(e.type==='peer-unavailable')return retry();
       if(peer.destroyed){peer=null;setTimeout(makePeer,3000)}else retry();
     });
   }
+  
   function connect(){
     if(!peer||!peer.open)return;
     audStatus('connecting');
     if(conn)try{conn.close()}catch{}
+    
+    console.log("Client: Connessione in corso...");
     conn=peer.connect(hostId,{reliable:true});
-    conn.on('open',()=>{audStatus('online');aud.last=Date.now()});
-    conn.on('data',d=>{aud.last=Date.now();if(d&&d.t==='state')audRender(d)});
-    conn.on('close',()=>{audStatus('offline');retry()});
-    conn.on('error',()=>{audStatus('offline');retry()});
+    
+    conn.on('open',()=>{
+      console.log("Client: Connessione aperta con successo!");
+      audStatus('online');
+      aud.last=Date.now();
+      // Forza una richiesta di stato iniziale se necessario
+    });
+    
+    conn.on('data',d=>{
+      aud.last=Date.now();
+      if(d && d.t==='state'){
+        console.log("Client: Dati ricevuti, rendering tabellone...");
+        audRender(d);
+      }
+    });
+    
+    conn.on('close',()=>{
+      console.warn("Client: Connessione chiusa");
+      audStatus('offline');retry()
+    });
+    
+    conn.on('error',(err)=>{
+      console.error("Client Connection Error:", err);
+      audStatus('offline');retry()
+    });
   }
-  // Watchdog heartbeat: se il conduttore tace per >14 s, riconnetti
-  setInterval(()=>{if(conn&&conn.open&&Date.now()-aud.last>14000){audStatus('offline');connect()}},4000);
-  document.addEventListener('visibilitychange',()=>{if(!document.hidden&&(!conn||!conn.open))connect()});
+  
+  // Watchdog heartbeat
+  setInterval(()=>{
+    if(conn&&conn.open&&Date.now()-aud.last>14000){
+      console.warn("Client: Heartbeat scaduto, riconnessione...");
+      audStatus('offline');connect()
+    }
+  },4000);
+  
+  document.addEventListener('visibilitychange',()=>{
+    if(!document.hidden&&(!conn||!conn.open))connect()
+  });
+  
   audStatus('connecting');makePeer();
 }
-
 /* =====================================================================
    12. AVVIO
    ===================================================================== */
